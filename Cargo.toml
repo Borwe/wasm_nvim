@@ -5,8 +5,23 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
+
+[build-dependencies]
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
+anyhow = "1.0"
+zip = "0.6"
+cc = "1.0"
+
+[target.'cfg(windows)'.dependencies]
 mlua = {version = "0.8.9", features = ["luajit", "module"]}
+
+[target.'cfg(unix)'.dependencies]
+mlua = {version = "0.8.9", features = ["luajit", "vendored", "module"]}
+
+[dependencies]
+anyhow = "1.0"
 
 [lib]
 crate-type = ["cdylib"]
+

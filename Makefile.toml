@@ -1,0 +1,22 @@
+[tasks.clean]
+command = "cargo"
+args = ["clean"]
+
+[tasks.nvimqt]
+command = "nvim-qt"
+args = ["--","-u",".\\default_cfg\\init.lua"]
+dependencies = ["move_win"]
+
+[tasks.move_win]
+script-runner = "@shell"
+script = '''copy .\target\release\wasm_nvim.dll .\'''
+dependencies = ["build_win"]
+
+[tasks.build_win]
+script-runner = "powershell"
+script = '''
+set LUA_INC=%CD%\target\release\build\LuaJIT-2.1.0-beta3\src
+set LUA_LIB=%CD%\target\release\build\LuaJIT-2.1.0-beta3\src
+set LUA_LIB_NAME=lua51
+cargo build -r
+'''
