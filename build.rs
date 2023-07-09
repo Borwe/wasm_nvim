@@ -3,6 +3,7 @@ use std::env;
 use std::str::FromStr;
 use std::fs;
 use zip;
+use std::path::PathBuf;
 use std::process::Command;
 
 const LUAJIT_2_1_0_BETA3_LINK: &'static str = "https://luajit.org/download/LuaJIT-2.1.0-beta3.zip";
@@ -11,11 +12,10 @@ const LUAJIT_DIR: &'static str = "LuaJIT-2.1.0-beta3";
 
 #[cfg(windows)]
 async fn get_luajit_source()-> Result<()>{
-    use std::{path::PathBuf, io::Stdout};
 
     let resp = reqwest::get(LUAJIT_2_1_0_BETA3_LINK)
         .await?.bytes().await?;
-    let mut target_dir = PathBuf::from_str(
+    let target_dir = PathBuf::from_str(
         &env::var("OUT_DIR").expect("Cargo out_dir not found"))?
         .parent().unwrap().parent().unwrap().join("luaj.zip");
 

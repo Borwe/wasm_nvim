@@ -20,3 +20,12 @@ set LUA_LIB=%CD%\target\release\build\LuaJIT-2.1.0-beta3\src
 set LUA_LIB_NAME=lua51
 cargo build -r
 '''
+
+[tasks.docs_win]
+script-runner = "powershell"
+script = '''
+set LUA_INC=%CD%\target\release\build\LuaJIT-2.1.0-beta3\src
+set LUA_LIB=%CD%\target\release\build\LuaJIT-2.1.0-beta3\src
+set LUA_LIB_NAME=lua51
+cargo doc --open
+'''
