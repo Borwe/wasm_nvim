@@ -2,3 +2,6 @@
 /Cargo.lock
 *.dll
 /venv
+
+*.wasm
+*.wasm.o
