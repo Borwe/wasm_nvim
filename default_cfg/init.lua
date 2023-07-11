@@ -1,6 +1,6 @@
 local wasm = require("wasm_nvim")
 wasm.setup {
-  -- dir = vim.fn.getcwd().."/wasm/",
+  dir = vim.fn.getcwd().."/wasm/",
   debug = true
 }
 
