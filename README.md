@@ -85,9 +85,9 @@ We would need an allocation and deallocation function implementation on every wa
      ```json
      {
          [
-         	{type: "chunk", loc: { beg: 1234, size: 52}},
-         	{type: "bool", loc: {beg: 1335, size: 1}},
-         	{type: "table", loc: {beg: 1337, size: 1}}
+         	{"type": "chunk", "loc": { "beg": 1234, "size": 52}},
+         	{"type": "bool", "loc": {"beg": 1335, "size": 1}},
+         	{"type": "table", "loc": {"beg": 1337, "size": 1}}
          ]
      }
      ```
@@ -113,13 +113,13 @@ We would need an allocation and deallocation function implementation on every wa
   9. Since this function returns nothing, generate a string representation of the json:
 
      ```json
-     {type: "void", loc: {beg: 0, size 0}}
+     {"type": "void", "loc": {"beg": 0, "size": 0}}
      ```
 
   10. If an error occurs, a type of error would be returned with a string contained in the loc range.
 
       ```json
-      {type: "error", loc: {beg: 5, size 100}}
+      {"type": "error", "loc": {"beg": 5, size 100}}
       ```
 
   11. The wasm module can then continue executing, doing it's thing on it's end.
