@@ -51,7 +51,7 @@ We would need an allocation and deallocation function implementation on every wa
   Use function in the following format in wasm side:
 
   ```c
-  extern nvim_echo(input: *u32, input_size: u32) -> [2]u32;
+  extern nvim_echo(input: *u32, input_size: u32) [2]u32;
   //all api functions being imported from wasm side should have this structure, as it appears in rust, or create an equivalent in other language. The function here is nvim_echo because that is the function we are importing to use.
   
   //input field is the pointer to the json string containing input to nvim_echo on lua side to be consumed.
@@ -62,15 +62,18 @@ We would need an allocation and deallocation function implementation on every wa
   //these should be a json string what can be evaluated in the same way from the input string using the same format
   ```
 
-  All api functions being imported from wasm side should have this structure, as it appears in rust, or create an equivalent in other language. The function here is nvim_echo because that is the function we are importing to use.
+  All api functions being imported from wasm side should have this structure, as it appears in rust, or create an equivalent in other language. The function here is `nvim_echo` because that is the function we are importing to use.
 
   - input field is the pointer to the json string containing input to nvim_echo on lua side to be consumed.
   - input_size field, is the size of the string.
+  - All input's should be assumed to be consumed, and therefore shouldn't be handled directly by modules.
+  - All modules need to have a dealloc function that can deallocate memory given a pointer range
 
   The output to any function will always return an array of two elements.
 
   - first contains a pointer, and second the size of the item in the pointer.
-  - these should be a json string what can be evaluated in the same way from the input string using the same format
+  - these should be a json string what can be evaluated in the same way from the input string using the same format.
+  - Outputs are generated from the alloc function which all modules should provide individually.
 
   
 
