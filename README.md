@@ -119,7 +119,7 @@ We would need an allocation and deallocation function implementation on every wa
   10. If an error occurs, a type of error would be returned with a string contained in the loc range.
 
       ```json
-      {"type": "error", "loc": {"beg": 5, size 100}}
+      {"type": "error", "loc": {"beg": 5, "size": 100}}
       ```
 
   11. The wasm module can then continue executing, doing it's thing on it's end.
