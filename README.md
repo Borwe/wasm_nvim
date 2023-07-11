@@ -20,7 +20,7 @@ We would need an allocation and deallocation function implementation on every wa
 
 - ### nvim_echo
 
-  function used to print/echo to the message bar on neovim. It takes 3 values as parameters:
+  function used to print/echo to the message bar on neovim. It takes 3 values as parameters and returns void:
 
   - A Chunk with text as main value, which can be represented as an Array of an Array containing 2 strings.
 
@@ -40,3 +40,86 @@ We would need an allocation and deallocation function implementation on every wa
 
   - A lua table with key of optional `verbose` (table can be empty, aka an empty array), with values. But only 1st value really matters, which is the key of "verbose", marking the message as to be redirected to `log_file` and not to messages-history depending on the value.
 
+  So, we need an api to allow this lua method to be called from wasm, and be handled by the library, as it does the lua interaction so:
+
+  ```
+  wasm = lib(rust) = lua
+  ```
+
+  **Strategy 1:**
+
+  Use function in the following format in wasm side:
+
+  ```c
+  extern nvim_echo(input: *u32, input_size: u32) -> [2]u32;
+  //all api functions being imported from wasm side should have this structure, as it appears in rust, or create an equivalent in other language. The function here is nvim_echo because that is the function we are importing to use.
+  
+  //input field is the pointer to the json string containing input to nvim_echo on lua side to be consumed.
+  //input_size field, is the size of the string.
+  
+  //The output to any function will always return an array of two elements.
+  //first contains a pointer, and second the size of the item in the pointer.
+  //these should be a json string what can be evaluated in the same way from the input string using the same format
+  ```
+
+  All api functions being imported from wasm side should have this structure, as it appears in rust, or create an equivalent in other language. The function here is nvim_echo because that is the function we are importing to use.
+
+  - input field is the pointer to the json string containing input to nvim_echo on lua side to be consumed.
+  - input_size field, is the size of the string.
+
+  The output to any function will always return an array of two elements.
+
+  - first contains a pointer, and second the size of the item in the pointer.
+  - these should be a json string what can be evaluated in the same way from the input string using the same format
+
+  
+
+  **Process:**
+
+  1. Create the objects to be passed to the `nvim_echo` functions from the wasm side.
+
+  2. Get each objects starting location, and length to it's end. storing them in variables.
+
+  3. Then generate a json string with data of the variables with their types. In this `nvim_echo` functions case it would be for example like:
+
+     ```json
+     {
+         [
+         	{type: "chunk", loc: { beg: 1234, size: 52}},
+         	{type: "bool", loc: {beg: 1335, size: 1}},
+         	{type: "table", loc: {beg: 1337, size: 1}}
+         ]
+     }
+     ```
+
+     
+
+  4. Get the address of the location to the start of the string, and the length.
+
+  5. Pass it to the nvim_echo field.
+
+  6. On Rust *(library)*  side, we open the memory of the module, go to the location of the pointer, and parse it to a string using it's size passed too.
+
+  7. Then parse the string and retrieve the objects from the `beg` pointers in memory, turning them to a `Lua` consumable objects, this functions case, it would be 3 objects of.
+
+     ```rust
+     vec![vec![val1]] // the chunk
+     bool //the bool
+     LuaTable //the table
+     ```
+
+  8. Pass them as a single LuaMultiValue to be consumed by the nvim side.
+
+  9. Since this function returns nothing, generate a string representation of the json:
+
+     ```json
+     {type: "void", loc: {beg: 0, size 0}}
+     ```
+
+  10. If an error occurs, a type of error would be returned with a string contained in the loc range.
+
+      ```json
+      {type: "error", loc: {beg: 5, size 100}}
+      ```
+
+  11. The wasm module can then continue executing, doing it's thing on it's end.
