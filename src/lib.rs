@@ -1,31 +1,10 @@
 use mlua::prelude::*;
 use anyhow::Result;
-use lazy_static::lazy_static;
-use std::cell::RefCell;
-use std::sync::Mutex;
+use std::str::FromStr;
 
 mod nvim_interface;
-
-lazy_static!{
-    static ref WASM_STATE: Box<Mutex<RefCell<WasmNvimState>>> = Box::new(Mutex::new(RefCell::new(WasmNvimState::new())));
-}
-
-struct WasmNvimState {
-    wasms: Vec<String>,
-    dir: Option<String>,
-    debug: bool
-}
-
-
-impl WasmNvimState {
-    pub(crate) fn new()-> Self {
-        WasmNvimState{
-            wasms: Vec::new(),
-            dir: None,
-            debug: false
-        }
-    }
-}
+mod utils;
+mod wasm_state;
 
 fn get_api_minor_version(lua: &Lua)-> LuaResult<()>{
     let print = lua.globals().get::<_, LuaFunction>("print")?;
@@ -42,20 +21,37 @@ fn get_api_minor_version(lua: &Lua)-> LuaResult<()>{
     Ok(())
 }
 
-fn get_wasm_dir(settings: &LuaTable)-> LuaResult<String>{
+fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
     
     match settings.get::<_, bool>("debug") {
-        Ok(x) => WASM_STATE.lock().unwrap().get_mut().debug = x,
-        Err(_) => WASM_STATE.lock().unwrap().get_mut().debug = false
+        Ok(x) => get_mut_state!().debug = x,
+        Err(_) => get_mut_state!().debug = false
     };
 
     if let Ok(d) =  settings.get::<_, LuaString>("dir") {
-        WASM_STATE.lock().unwrap().get_mut().dir = Some(d.to_str()?.into());
+        get_mut_state!().dir = Some(d.to_str()?.into());
     }else{
-        return Result::Err(mlua::Error::RuntimeError("No dir path given in settings on setup call".into()));
+        return utils::generate_error("No dir path given in settings on setup call");
     }
 
-    Ok("".to_string())
+    let path = std::path::PathBuf::from_str(get_ref_state!().dir.as_ref().unwrap().as_str()).unwrap();
+
+    if !path.exists() || !path.is_dir() {
+        return utils::generate_error("Path passed as dir option not a real directory or doesn't exist");
+    }
+
+    std::fs::read_dir(&path)?.into_iter().for_each(|p|{
+        let p = p.unwrap();
+        if p.path().extension().unwrap() == "wasm" {
+            get_mut_state!().wasms.push(p.path().to_str().unwrap().to_string())
+        }
+    });
+
+    Ok(())
+}
+
+fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
+    Ok(())
 }
 
 fn setup(lua: &'static Lua, settings: LuaTable)-> LuaResult<()>{
@@ -71,7 +67,8 @@ fn setup(lua: &'static Lua, settings: LuaTable)-> LuaResult<()>{
 
     echo.call::<_, ()>(params)?;
 
-    get_wasm_dir(&settings)?;
+    parse_wasm_dir(lua, &settings)?;
+    setup_nvim_apis(lua);
 
     Ok(())
 }

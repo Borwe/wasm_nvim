@@ -23,6 +23,7 @@ mlua = {version = "0.8.9", features = ["luajit", "vendored", "module"]}
 anyhow = "1.0"
 lazy_static = "1.4.0"
 libc = "0.2.147"
+serde = {version = "1.0.171",  features = ["derive"]}
 wasmtime = "10.0.1"
 wasmtime-wasi = "10.0.1"
 
