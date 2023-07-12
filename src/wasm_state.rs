@@ -10,13 +10,14 @@ lazy_static!{
     pub(crate) static ref WASM_STATE: Box<Mutex<RefCell<WasmNvimState>>> = Box::new(Mutex::new(RefCell::new(WasmNvimState::new())));
 }
 
-pub(crate) struct WasmNvimState {
+pub(crate) struct WasmNvimState{
     pub(crate) wasms: Vec<String>,
     pub(crate) dir: Option<String>,
     pub(crate) debug: bool,
     pub(crate) wasm_engine: Engine,
     pub(crate) linker: Linker<WasiCtx>,
     pub(crate) store: Store<WasiCtx>,
+    lua: Option<usize>
 }
 
 impl WasmNvimState {
@@ -40,7 +41,24 @@ impl WasmNvimState {
             debug: false,
             wasm_engine,
             linker,
-            store
+            store,
+            lua: None
+        }
+    }
+
+    pub(crate) fn get_lua(&self) -> Option<*const Lua>{
+        match self.lua {
+            Some(addr) => unsafe {
+                Some((addr as *const Lua))
+            },
+            None => None
+        }
+    }
+
+    pub(crate) fn set_lua(&mut self, lua: &Lua) {
+        unsafe {
+            let addr = (lua as *const _) as usize;
+            self.lua = Some(addr);
         }
     }
 }

@@ -4,6 +4,8 @@ const ArrayList = std.ArrayList;
 const json = std.json;
 const inf = std.builtin.Type;
 
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+
 extern fn nvim_echo(start: *const u8, end: *const u8) void;
 
 const LuaTypes = enum(u8) { table, bool, number, empty };
@@ -50,6 +52,16 @@ fn getParamFromChunk(comptime T: type, comptime I: type, data: *const ArrayList(
     return .{ .type = @intFromEnum(LuaTypes.table), .start = end, .end = end };
 }
 
+export fn alloc(size: u32) *u8 {
+    var aloc = gpa.allocator();
+    var buf = aloc.alloc(u8, size) catch undefined;
+    return &buf[0];
+}
+
+export fn dealloc(beg: *u8, _: u32) void {
+    std.c.free(beg);
+}
+
 /// All functions that export must have a start and and
 /// that allow wasms to reutn pointers to memory
 /// where the return value is. returned values would be freed
@@ -60,16 +72,15 @@ export fn hi(return_start: *const u8, return_end: *const u8) void {
     // this is required for zig
     _ = return_start;
     _ = return_end;
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    var alloc = gpa.allocator();
+    var aloc = gpa.allocator();
     const stdout = std.io.getStdOut().writer();
 
     _ = stdout.write("HELLO WASM ZIG\n") catch undefined;
 
     // create a chunk of strings, which is a {{}}. An Array list in an arraylist
-    var arr = ArrayList(ArrayList(ArrayList(u8))).init(alloc);
-    var in = ArrayList(ArrayList(u8)).init(alloc);
-    var value = ArrayList(u8).init(alloc);
+    var arr = ArrayList(ArrayList(ArrayList(u8))).init(aloc);
+    var in = ArrayList(ArrayList(u8)).init(aloc);
+    var value = ArrayList(u8).init(aloc);
     _ = value.appendSlice("YEAH BABY WASM ZIG IS GANGSTA FOR REAL FOR REAL YO!!!!") catch undefined;
     _ = in.append(value) catch undefined;
     _ = arr.append(in) catch undefined;
@@ -80,13 +91,13 @@ export fn hi(return_start: *const u8, return_end: *const u8) void {
     //const testString = "YOLO";
     //_ = getParam(@TypeOf(testString), &testString, LuaTypes.empty) catch undefined;
 
-    var params = ArrayList(Param).init(alloc);
+    var params = ArrayList(Param).init(aloc);
     //_ = params.append(chunk) catch undefined;
     _ = params.append(chunk) catch undefined;
     _ = params.append(hold_message) catch undefined;
     _ = params.append(opts) catch undefined;
 
-    var return_params = ArrayList(u8).init(alloc);
+    var return_params = ArrayList(u8).init(aloc);
     //_ = json.stringify(params, .{}, return_params.writer()) catch undefined;
 
     //pring what would be sent to wasm_nvim side

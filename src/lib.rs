@@ -51,6 +51,47 @@ fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
 }
 
 fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
+    get_mut_state!().linker.func_wrap("","nvim_echo",
+      |ctx: wasmtime::Caller<'_, _>, beg: u32, end: u32|{
+          //utils::debug(lua, "WOOOOOOOOOOOOOOOT!").unwrap();
+    });
+    Ok(())
+}
+
+fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
+    let wasms = {
+        get_mut_state!().set_lua(lua);
+        get_ref_state!().wasms.clone()
+    };
+    wasms.iter().for_each(|wasm|{
+        let lua = unsafe{
+            let ptr = get_mut_state!().get_lua().unwrap();
+            &(*ptr)
+        };
+
+        let wasm_path = std::path::PathBuf::from(wasm);
+        let wasm = wasm_path.file_stem().unwrap().to_str().unwrap();
+
+        let wasm_plug = lua.create_table().unwrap();
+
+
+        let test_func = lua.create_function(
+            |lua: &Lua, _: LuaValue|{
+            utils::debug(lua, "LUA TEST!!!!!")?;
+            Ok(())
+        }).unwrap();
+        //manually add hi function
+        wasm_plug.set::<_, LuaFunction>("hi", test_func);
+
+        //add wasm_plug
+        lua.globals().get::<_, LuaFunction>("require").unwrap()
+            .call::<_, LuaTable>("wasm_nvim").unwrap()
+            .set::<_, _>(wasm.clone().to_lua(lua).unwrap(), wasm_plug).unwrap();
+
+
+
+        utils::debug(lua, &format!("Loaded: {}",wasm));
+    });
     Ok(())
 }
 
@@ -68,13 +109,15 @@ fn setup(lua: &'static Lua, settings: LuaTable)-> LuaResult<()>{
     echo.call::<_, ()>(params)?;
 
     parse_wasm_dir(lua, &settings)?;
-    setup_nvim_apis(lua);
+    setup_nvim_apis(lua)?;
+    setup_wasms_with_lua(lua)?;
 
     Ok(())
 }
 
 #[mlua::lua_module]
 fn wasm_nvim(lua: &'static Lua) -> LuaResult<LuaTable>{
+        
     let exports = lua.create_table()?;
 
     exports.set("setup", lua.create_function(setup)?)?;
