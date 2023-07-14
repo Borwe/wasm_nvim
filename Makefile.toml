@@ -2,6 +2,17 @@
 command = "cargo"
 args = ["clean"]
 
+
+[tasks.zig_run]
+command = "wasmtime"
+cwd = "./wasm"
+args = ["zig_examp.wasm"]
+
+[tasks.zig_main]
+command = "zig"
+cwd = "./wasm"
+args = ["build-exe","zig_examp.zig","-target","wasm32-wasi","-lc"]
+
 [tasks.nvimqt]
 command = "nvim-qt"
 args = ["--","-u",".\\default_cfg\\init.lua"]
