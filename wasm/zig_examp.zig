@@ -52,26 +52,47 @@ fn getParamFromChunk(comptime T: type, comptime I: type, data: *const ArrayList(
     return .{ .type = @intFromEnum(LuaTypes.table), .start = end, .end = end };
 }
 
+const Functionality = struct {
+    name: []const u8, //hold name of function
+    params: []const u8, //hold params types, by order
+};
+
+fn CreateFunctionality(comptime name: []const u8, comptime params: []const u8) Functionality {
+    return .{ .name = name, .params = params };
+}
+
+fn genetrateFunctionality(funcs: ArrayList(Functionality)) !ArrayList(u8) {
+    var stringified = ArrayList(u8).init(funcs.allocator);
+    try json.stringify(funcs.items, .{}, stringified.writer());
+    return stringified;
+}
+
 export fn alloc(size: u32) *u8 {
     var aloc = gpa.allocator();
     var buf = aloc.alloc(u8, size) catch undefined;
     return &buf[0];
 }
 
-export fn dealloc(beg: *u8, _: u32) void {
-    std.c.free(beg);
+export fn dealloc(beg: *[]u8, _: u32) void {
+    var aloc = gpa.allocator();
+    aloc.free(beg.*);
+}
+
+export fn functionality() *const [2]u32 {
+    var aloc = gpa.allocator();
+    var functions = ArrayList(Functionality).init(aloc);
+    _ = functions.append(CreateFunctionality("hi", "void")) catch undefined;
+    var funcs_json: ArrayList(u8) = genetrateFunctionality(functions) catch unreachable;
+    std.io.getStdOut().writer().print("VAL: {s}\n", .{funcs_json.items}) catch unreachable;
+    var results = [_]u32{ @intFromPtr(&funcs_json), funcs_json.items.len };
+    return &results;
 }
 
 /// All functions that export must have a start and and
 /// that allow wasms to reutn pointers to memory
 /// where the return value is. returned values would be freed
 /// from the wasm_nvim library end
-export fn hi(return_start: *const u8, return_end: *const u8) void {
-
-    // we don't use the params passed,
-    // this is required for zig
-    _ = return_start;
-    _ = return_end;
+export fn hi() void {
     var aloc = gpa.allocator();
     const stdout = std.io.getStdOut().writer();
 
@@ -106,5 +127,7 @@ export fn hi(return_start: *const u8, return_end: *const u8) void {
 }
 
 pub fn main() !void {
-    hi(undefined, undefined);
+    var vals = functionality();
+    std.io.getStdOut().writer().print("VAL: {d} {d}\n", .{ vals.*[0], vals.*[1] }) catch unreachable;
+    hi();
 }

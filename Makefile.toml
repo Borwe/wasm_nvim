@@ -7,6 +7,7 @@ args = ["clean"]
 command = "wasmtime"
 cwd = "./wasm"
 args = ["zig_examp.wasm"]
+dependencies = ["zig_main"]
 
 [tasks.zig_main]
 command = "zig"
