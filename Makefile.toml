@@ -2,6 +2,10 @@
 command = "cargo"
 args = ["clean"]
 
+[tasks.zig_wasm]
+command = "zig"
+cwd = "./wasm"
+args = ["build-lib","zig_examp.zig","-target","wasm32-wasi", "-dynamic", "-rdynamic"]
 
 [tasks.zig_run]
 command = "wasmtime"
@@ -12,12 +16,12 @@ dependencies = ["zig_main"]
 [tasks.zig_main]
 command = "zig"
 cwd = "./wasm"
-args = ["build-exe","zig_examp.zig","-target","wasm32-wasi","-lc"]
+args = ["build-exe","zig_examp.zig","-target","wasm32-wasi"]
 
 [tasks.nvimqt]
 command = "nvim-qt"
 args = ["--","-u",".\\default_cfg\\init.lua"]
-dependencies = ["move_win"]
+dependencies = ["move_win","zig_wasm"]
 
 [tasks.move_win]
 script-runner = "@shell"

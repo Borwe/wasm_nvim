@@ -1,16 +1,15 @@
 use mlua::prelude::*;
 use anyhow::Result;
-
-use crate::get_ref_state;
+use crate::wasm_state::WASM_STATE;
 
 pub fn generate_error<Return>(error: &str)-> LuaResult<Return> {
     return Err(mlua::Error::RuntimeError(error.into()));
 }
 
 pub fn debug(lua: &Lua, data: &str) ->  LuaResult<()>{
-    if get_ref_state!().debug == true {
+    if WASM_STATE.lock().unwrap().borrow().debug == true {
         lua.globals().get::<_, LuaFunction>("print")?
-            .call::<_,()>(data)?;
+            .call::<_,()>(data.to_lua(lua)?)?;
     }
     Ok(())
 }

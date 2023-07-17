@@ -1,13 +1,25 @@
 use lazy_static::lazy_static;
-use std::cell::{RefCell, Ref};
+use std::{cell::{RefCell, Ref}, io::Read};
 use anyhow::Result;
-use std::sync::Mutex;
+use std::sync::{Mutex, Arc};
 use wasmtime::*;
 use wasmtime_wasi::WasiCtx;
 use mlua::prelude::*;
+use std::collections::HashMap;
 
-lazy_static!{
-    pub(crate) static ref WASM_STATE: Box<Mutex<RefCell<WasmNvimState>>> = Box::new(Mutex::new(RefCell::new(WasmNvimState::new())));
+pub(crate) enum Types {
+    /// hold when reading values from a buffer to a string
+    String, 
+}
+
+#[derive(Debug)]
+pub(crate) enum ValueFromWasm {
+    String(String),
+    Nonthing
+}
+
+lazy_static! {
+    pub(crate) static ref WASM_STATE: Mutex<RefCell<WasmNvimState>> = Mutex::new(RefCell::new(WasmNvimState::new()));
 }
 
 pub(crate) struct WasmNvimState{
@@ -17,7 +29,9 @@ pub(crate) struct WasmNvimState{
     pub(crate) wasm_engine: Engine,
     pub(crate) linker: Linker<WasiCtx>,
     pub(crate) store: Store<WasiCtx>,
-    lua: Option<usize>
+    pub(crate) wasm_modules: Vec<Module>,
+    lua: Option<usize>,
+    pub(crate) return_values: HashMap<u32, String>
 }
 
 impl WasmNvimState {
@@ -33,6 +47,7 @@ impl WasmNvimState {
             .inherit_stderr()
             .inherit_stdio().build();
 
+
         let mut store = Store::new(&wasm_engine, wasi );
 
         WasmNvimState{
@@ -42,18 +57,53 @@ impl WasmNvimState {
             wasm_engine,
             linker,
             store,
+            wasm_modules: Vec::new(),
+            return_values: HashMap::new(),
             lua: None
+        }
+    }
+
+    /// Generate unique ID to be used for returns
+    pub(crate) fn get_id(&mut self)-> u32 {
+        for i in 0..std::u32::MAX{
+            let mut exists = false;
+            for k in self.return_values.keys(){
+                if i == *k {
+                    exists = true;
+                    break;
+                }
+            }
+            if exists ==false {
+                self.return_values.insert(i, "".to_string());
+                return i;
+            }
+        }
+        panic!("Used all available IDs");
+    }
+
+
+    pub(crate) fn get_value(&mut self, id: u32, ty: Types) -> Result<ValueFromWasm> {
+        match ty {
+            Types::String => {
+                let value = match self.return_values.remove(&id) {
+                    Some(x) => x,
+                    None => panic!("Key: {} has no value associated", id)
+                };
+                Ok(ValueFromWasm::String(value))
+            },
+            _ => panic!("Not implemented yet")
         }
     }
 
     pub(crate) fn get_lua(&self) -> Option<*const Lua>{
         match self.lua {
             Some(addr) => unsafe {
-                Some((addr as *const Lua))
+                Some(addr as *const Lua)
             },
             None => None
         }
     }
+
 
     pub(crate) fn set_lua(&mut self, lua: &Lua) {
         unsafe {
@@ -61,18 +111,4 @@ impl WasmNvimState {
             self.lua = Some(addr);
         }
     }
-}
-
-#[macro_export]
-macro_rules! get_mut_state {
-    () => {
-        crate::wasm_state::WASM_STATE.lock().unwrap().borrow_mut()
-    };
-}
-
-#[macro_export]
-macro_rules! get_ref_state {
-    () => {
-        crate::wasm_state::WASM_STATE.lock().unwrap().borrow()
-    };
 }

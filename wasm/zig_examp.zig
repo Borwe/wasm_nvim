@@ -1,12 +1,11 @@
 const std = @import("std");
-const Alloc = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 const json = std.json;
-const inf = std.builtin.Type;
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+var aloc = std.heap.page_allocator;
 
 extern fn nvim_echo(start: *const u8, end: *const u8) void;
+extern "host" fn set_value(id: u32, loc: *u8, size: u32) void;
 
 const LuaTypes = enum(u8) { table, bool, number, empty };
 
@@ -61,31 +60,22 @@ fn CreateFunctionality(comptime name: []const u8, comptime params: []const u8) F
     return .{ .name = name, .params = params };
 }
 
-fn genetrateFunctionality(funcs: ArrayList(Functionality)) !ArrayList(u8) {
-    var stringified = ArrayList(u8).init(funcs.allocator);
-    try json.stringify(funcs.items, .{}, stringified.writer());
-    return stringified;
-}
-
 export fn alloc(size: u32) *u8 {
-    var aloc = gpa.allocator();
     var buf = aloc.alloc(u8, size) catch undefined;
     return &buf[0];
 }
 
 export fn dealloc(beg: *[]u8, _: u32) void {
-    var aloc = gpa.allocator();
     aloc.free(beg.*);
 }
 
-export fn functionality() *const [2]u32 {
-    var aloc = gpa.allocator();
+export fn functionality(id: u32) void {
     var functions = ArrayList(Functionality).init(aloc);
-    _ = functions.append(CreateFunctionality("hi", "void")) catch undefined;
-    var funcs_json: ArrayList(u8) = genetrateFunctionality(functions) catch unreachable;
-    std.io.getStdOut().writer().print("VAL: {s}\n", .{funcs_json.items}) catch unreachable;
-    var results = [_]u32{ @intFromPtr(&funcs_json), funcs_json.items.len };
-    return &results;
+    _ = functions.append(CreateFunctionality("hipe", "void")) catch undefined;
+    var stringified = ArrayList(u8).init(aloc);
+    json.stringify(functions.items, .{}, stringified.writer()) catch undefined;
+    var unmanaged = stringified.moveToUnmanaged();
+    set_value(id, &unmanaged.items[0], unmanaged.items.len);
 }
 
 /// All functions that export must have a start and and
@@ -93,7 +83,6 @@ export fn functionality() *const [2]u32 {
 /// where the return value is. returned values would be freed
 /// from the wasm_nvim library end
 export fn hi() void {
-    var aloc = gpa.allocator();
     const stdout = std.io.getStdOut().writer();
 
     _ = stdout.write("HELLO WASM ZIG\n") catch undefined;
@@ -126,8 +115,11 @@ export fn hi() void {
     _ = stdout.write("\n") catch undefined;
 }
 
-pub fn main() !void {
-    var vals = functionality();
-    std.io.getStdOut().writer().print("VAL: {d} {d}\n", .{ vals.*[0], vals.*[1] }) catch unreachable;
-    hi();
-}
+//pub fn main() !void {
+//var val = functionality();
+//var prt: *[]u8 = @as(*[]u8, @ptrFromInt(val.*[0]));
+//std.io.getStdOut().writer().print("VALSTR:{s}\n", .{prt.*}) catch unreachable;
+//std.io.getStdOut().writer().print("VAL_AT: {d}\n", .{val.*[0]}) catch unreachable;
+
+//hi();
+//}

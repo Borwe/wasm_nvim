@@ -1,10 +1,13 @@
 use mlua::prelude::*;
 use anyhow::Result;
+use wasmtime::*;
 use std::str::FromStr;
 
 mod nvim_interface;
 mod utils;
 mod wasm_state;
+
+use wasm_state::{WASM_STATE, WasmNvimState, Types, ValueFromWasm};
 
 fn get_api_minor_version(lua: &Lua)-> LuaResult<()>{
     let print = lua.globals().get::<_, LuaFunction>("print")?;
@@ -24,17 +27,17 @@ fn get_api_minor_version(lua: &Lua)-> LuaResult<()>{
 fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
     
     match settings.get::<_, bool>("debug") {
-        Ok(x) => get_mut_state!().debug = x,
-        Err(_) => get_mut_state!().debug = false
+        Ok(x) => WASM_STATE.lock().unwrap().get_mut().debug = x,
+        Err(_) => WASM_STATE.lock().unwrap().get_mut().debug = false
     };
 
     if let Ok(d) =  settings.get::<_, LuaString>("dir") {
-        get_mut_state!().dir = Some(d.to_str()?.into());
+        WASM_STATE.lock().unwrap().get_mut().dir = Some(d.to_str()?.into());
     }else{
         return utils::generate_error("No dir path given in settings on setup call");
     }
 
-    let path = std::path::PathBuf::from_str(get_ref_state!().dir.as_ref().unwrap().as_str()).unwrap();
+    let path = std::path::PathBuf::from_str(WASM_STATE.lock().unwrap().borrow().dir.as_ref().unwrap()).unwrap();
 
     if !path.exists() || !path.is_dir() {
         return utils::generate_error("Path passed as dir option not a real directory or doesn't exist");
@@ -43,7 +46,7 @@ fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
     std::fs::read_dir(&path)?.into_iter().for_each(|p|{
         let p = p.unwrap();
         if p.path().extension().unwrap() == "wasm" {
-            get_mut_state!().wasms.push(p.path().to_str().unwrap().to_string())
+            WASM_STATE.lock().unwrap().get_mut().wasms.push(p.path().to_str().unwrap().to_string())
         }
     });
 
@@ -51,7 +54,7 @@ fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
 }
 
 fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
-    get_mut_state!().linker.func_wrap("","nvim_echo",
+    WASM_STATE.lock().unwrap().get_mut().linker.func_wrap("","nvim_echo",
       |ctx: wasmtime::Caller<'_, _>, beg: u32, end: u32|{
           //utils::debug(lua, "WOOOOOOOOOOOOOOOT!").unwrap();
     });
@@ -60,14 +63,71 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
 
 fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
     let wasms = {
-        get_mut_state!().set_lua(lua);
-        get_ref_state!().wasms.clone()
+        WASM_STATE.lock().unwrap().borrow_mut().set_lua(lua);
+
+        WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "set_value",
+            |mut caller: Caller<'_, _>, id: u32, loc: u32, size: u32|{
+            // Avoid locking through out this full function, once here means we are safe.
+            let state = unsafe {
+                &mut (*(WASM_STATE.lock().unwrap().get_mut() as *mut WasmNvimState))
+            };
+            let mut mem = caller.get_export("memory").unwrap().into_memory().unwrap();
+            let mut ptr = unsafe {
+                mem.data_ptr(&state.store).offset(loc as isize) as *const u8
+            };
+            let mut val_to_add = String::new();
+            for _ in 0..size{
+                let c = unsafe{
+                    let c = *ptr as char;
+                    ptr = ptr.offset(1);
+                    c
+                };
+                val_to_add.push(c);
+            }
+
+
+            utils::debug(unsafe {&*state.get_lua().unwrap()}, &format!("SET ID: {} LOC: {}, SIZE: {}", id, loc, size));
+            //utils::debug(unsafe {&*state.get_lua().unwrap()}, &format!("GOT {}", result));
+
+            state.return_values.insert(id, val_to_add).unwrap();
+        }).unwrap();
+
+        WASM_STATE.lock().unwrap().borrow().wasms.clone()
     };
+
+
     wasms.iter().for_each(|wasm|{
         let lua = unsafe{
-            let ptr = get_mut_state!().get_lua().unwrap();
+            let ptr = WASM_STATE.lock().unwrap().borrow().get_lua().unwrap();
             &(*ptr)
         };
+
+
+        //get and add module
+        {
+            let (mut state, id) = unsafe {
+                let id = WASM_STATE.lock().unwrap().get_mut().get_id();
+                let state = &mut (*(WASM_STATE.lock().unwrap().get_mut() as *mut WasmNvimState));
+                (state, id)
+            };
+            let module = Module::from_file(&state.wasm_engine,wasm).unwrap();
+            state.linker.module(&mut state.store, wasm, &module).expect("linker module link fail");
+            let mut instance = state.linker.instantiate(&mut state.store , &module).unwrap();
+            let functionality = instance
+                .get_typed_func::<u32,()>(&mut state.store, "functionality").unwrap();
+
+            //get functionality exported from module
+            functionality.call(&mut state.store, id).unwrap();
+
+
+            match state.get_value(id, Types::String).unwrap(){
+                ValueFromWasm::String(s) => utils::debug(lua, &format!("VAL: {}",s)).unwrap(),
+                _ => panic!("Error loading functionality")
+            };
+
+            //add module to list
+            state.wasm_modules.push(module);
+        }
 
         let wasm_path = std::path::PathBuf::from(wasm);
         let wasm = wasm_path.file_stem().unwrap().to_str().unwrap();
@@ -80,6 +140,9 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
             utils::debug(lua, "LUA TEST!!!!!")?;
             Ok(())
         }).unwrap();
+
+
+
         //manually add hi function
         wasm_plug.set::<_, LuaFunction>("hi", test_func);
 
