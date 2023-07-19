@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use std::{cell::{RefCell, Ref}, io::Read};
+use std::{cell::{RefCell, Ref}, io::Read, collections::HashSet};
 use anyhow::Result;
 use std::sync::{Mutex, Arc};
 use wasmtime::*;
@@ -30,8 +30,9 @@ pub(crate) struct WasmNvimState{
     pub(crate) linker: Linker<WasiCtx>,
     pub(crate) store: Store<WasiCtx>,
     pub(crate) wasm_modules: Vec<Module>,
+    pub(crate) nvim_types: HashSet<String>,
     lua: Option<usize>,
-    pub(crate) return_values: HashMap<u32, String>
+    pub(crate) return_values: HashMap<u32, String>,
 }
 
 impl WasmNvimState {
@@ -52,6 +53,7 @@ impl WasmNvimState {
 
         WasmNvimState{
             wasms: Vec::new(),
+            nvim_types: HashSet::new(),
             dir: None,
             debug: false,
             wasm_engine,

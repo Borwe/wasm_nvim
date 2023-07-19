@@ -54,7 +54,30 @@ fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
 }
 
 fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
+    use std::collections::HashSet;
+    let api_table: LuaTable = lua.globals().get::<_, LuaTable>("vim")?
+        .get::<_,LuaTable>("fn")?
+        .get::<_, LuaFunction>("api_info")?.call::<_, LuaTable>(())?;
+    let apis_json = lua.globals().get::<_, LuaTable>("vim")?
+        .get::<_, LuaTable>("json")?
+        .call_function::<_,_,LuaString>("encode",api_table)?;
 
+    let api_vals = serde_json::value::Value::from_str(apis_json.to_str().unwrap())
+        .expect("Couldn't parse JSON");
+
+    let functions = api_vals.get("functions").unwrap().as_array().unwrap();
+
+    for func in functions.iter(){
+        for params in func.get("parameters").unwrap().as_array().iter(){
+            for params_outer in params.iter() {
+                for param_inner in params_outer.as_array().iter() {
+                    WASM_STATE.lock().unwrap().get_mut().nvim_types.insert(String::from(param_inner[0].as_str().unwrap()));
+                }
+            }
+        }
+    }
+
+    //utils::debug(lua, apis_json.to_str()?)?;
     //WASM_STATE.lock().unwrap().get_mut().linker.func_wrap("","nvim_echo",
     //  |ctx: wasmtime::Caller<'_, _>, beg: u32, end: u32|{
     //      //utils::debug(lua, "WOOOOOOOOOOOOOOOT!").unwrap();
@@ -150,17 +173,21 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
         utils::lua_require::<LuaTable>(lua, "wasm_nvim").unwrap()
             .set::<_, _>(wasm.clone().to_lua(lua).unwrap(), wasm_plug).unwrap();
 
-
-
         utils::debug(lua, &format!("Loaded: {}",wasm));
     });
     Ok(())
 }
 
+fn print_nvim_types(lua: &'static Lua, _: LuaValue)-> LuaResult<()>{
+    let types = serde_json::to_string(&WASM_STATE.lock().unwrap().borrow().nvim_types)
+        .expect("Failed trying to parse nvim_types as json from WASM_STATE");
+    utils::debug(lua, &format!("Neovim Types : {}",types))
+}
+
 fn setup(lua: &'static Lua, settings: LuaTable)-> LuaResult<()>{
 
     parse_wasm_dir(lua, &settings)?;
-    setup_nvim_apis(lua)?;
+    setup_nvim_apis(lua)?; //also sets the nvim_types up in WASM_STATE
     setup_wasms_with_lua(lua)?;
 
     Ok(())
@@ -172,6 +199,7 @@ fn wasm_nvim(lua: &'static Lua) -> LuaResult<LuaTable>{
     let exports = lua.create_table()?;
 
     exports.set("setup", lua.create_function(setup)?)?;
+    exports.set("print_nvim_types", lua.create_function(print_nvim_types)?)?;
     Ok(exports)
 }
 
