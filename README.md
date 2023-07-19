@@ -1,6 +1,4 @@
-# <u>
-
-# Currently still under construction</u>
+# <u>Currently still under construction</u>
 
 ## Aim:
 
@@ -50,30 +48,28 @@ We would need an allocation and deallocation function implementation on every wa
 
   Use function in the following format in wasm side:
 
-  ```c
-  extern nvim_echo(input: *u32, input_size: u32) [2]u32;
-  //all api functions being imported from wasm side should have this structure, as it appears in rust, or create an equivalent in other language. The function here is nvim_echo because that is the function we are importing to use.
+  ```zig
+  extern "host" nvim_echo(id: u32, input: *u8, input_size: u32);
+  //all api functions being imported from wasm side should have this structure, as it appears in zig, or create an equivalent in other language. The function here is nvim_echo because that is the function we are importing to use from host/neovim side.
+  
+  //id is to be used for registering/identifying input sent between wasm, and neovim(this library), which if the function returns, the user can get the value of returned from it
+  //by using a get_value function extern function, that should take in an id, a pointer, and size of the value where it is located on wasm side
   
   //input field is the pointer to the json string containing input to nvim_echo on lua side to be consumed.
   //input_size field, is the size of the string.
   
-  //The output to any function will always return an array of two elements.
-  //first contains a pointer, and second the size of the item in the pointer.
-  //these should be a json string what can be evaluated in the same way from the input string using the same format
+  
   ```
 
   All api functions being imported from wasm side should have this structure, as it appears in rust, or create an equivalent in other language. The function here is `nvim_echo` because that is the function we are importing to use.
 
+  - id field determines the register/unique id of interaction between wasm and library end, can be used to send/recieve values between the two.
+
   - input field is the pointer to the json string containing input to nvim_echo on lua side to be consumed.
   - input_size field, is the size of the string.
-  - All input's should be assumed to be consumed, and therefore shouldn't be handled directly by modules.
+  - All input's should be assumed to be consumed, and therefore shouldn't be handled directly by wasm modules.
+  - All outputs coming from library should be assumed to be unmanaged, memory to it should be handled by the module.
   - All modules need to have a dealloc function that can deallocate memory given a pointer range
-
-  The output to any function will always return an array of two elements.
-
-  - first contains a pointer, and second the size of the item in the pointer.
-  - these should be a json string what can be evaluated in the same way from the input string using the same format.
-  - Outputs are generated from the alloc function which all modules should provide individually.
 
   
 
