@@ -122,3 +122,34 @@ We would need an allocation and deallocation function implementation on every wa
       ```
 
   11. The wasm module can then continue executing, doing it's thing on it's end.
+
+
+
+## Exposed Useful Functions from Wasm_Nvim
+
+- ```zig
+  extern "host" get_id() u32;
+  ```
+
+  Get a unique `id` to be used for sharing data between wasm module and outside world.
+
+- ```zig
+  extern "host" get_value_addr(id: u32) u32;
+  ```
+
+  Usable for getting location of value that was created from outside world of module. The value pointed here is to be managed by the module, and deallocated.
+  **NOTE: value is cleared from memory of outside world once called, make sure to call `get_value_size`, so as to know the length before calling this function**
+
+- ```zig
+  extern "host" get_value_size(id: u32) u32;
+  ```
+
+  Given an id to a value, it returns the size of the value located at given id. This should be called before `get_value_addr` as that would clear the id from memory.
+
+  
+
+- ```zig
+  extern "host" return_value(id: u32, loc: *u8, size: u32) void;
+  ```
+
+  Used for returning a value to the `wasm_nvim` library or to the outside world from the wasm module using it. Users of this method should make sure the relinquish control of any thing the pointer is pointing to.
