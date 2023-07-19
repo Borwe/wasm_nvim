@@ -14,6 +14,13 @@ pub fn debug(lua: &Lua, data: &str) ->  LuaResult<()>{
     Ok(())
 }
 
+pub fn lua_require<'a,LuaType>(lua: &'a Lua, pkg: &'a str)
+    -> LuaResult<LuaType> where LuaType: Clone + FromLuaMulti<'a>{
+    let result = lua.globals().get::<_, LuaFunction>("require")?
+        .call::<_, LuaType>(pkg);
+    result
+}
+
 /// Transform normal anyhowResult to LuaResult
 pub fn to_lua_result<R>(result: Result<R>, error: Option<&str>) -> LuaResult<R>{
     match result {
