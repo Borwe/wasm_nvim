@@ -153,3 +153,16 @@ We would need an allocation and deallocation function implementation on every wa
   ```
 
   Used for returning a value to the `wasm_nvim` library or to the outside world from the wasm module using it. Users of this method should make sure the relinquish control of any thing the pointer is pointing to.
+
+
+## Types representations
+
+| Normal language type in wasm module side(using zig) | Neovim data types                |
+| --------------------------------------------------- | -------------------------------- |
+| ```bool```                                          | Boolean                          |
+| ```i64```                                           | Integer, Buffer, Window, TabPage |
+|                                                     | Dictionary                       |
+| ```[_]u8```                                         | Object, String                   |
+| ```ArrayList```                                     | Array                            |
+| ```f64```                                           | Float                            |
+| ```HashMap(ArrayList(u8), )```                      | LuaRef                           |
