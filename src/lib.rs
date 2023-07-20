@@ -71,7 +71,7 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
         for params in func.get("parameters").unwrap().as_array().iter(){
             for params_outer in params.iter() {
                 for param_inner in params_outer.as_array().iter() {
-                    WASM_STATE.lock().unwrap().get_mut().nvim_types.insert(String::from(param_inner[0].as_str().unwrap()));
+                    WASM_STATE.lock().unwrap().get_mut().nvim_types.insert(String::from(param_inner[1].as_str().unwrap()));
                 }
             }
         }
