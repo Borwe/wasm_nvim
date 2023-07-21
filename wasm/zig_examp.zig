@@ -4,8 +4,9 @@ const json = std.json;
 
 var aloc = std.heap.page_allocator;
 
-extern "host" fn set_value(id: u32, loc: *u8, size: u32) void;
+extern "host" fn set_value(id: u32, loc: u32, size: u32) void;
 extern "host" fn get_id() u32;
+extern "host" fn get_addr(addr: *u8) u32;
 
 extern fn nvim_echo(start: *const u8, end: *const u8) void;
 
@@ -79,8 +80,9 @@ export fn functionality() u32 {
     var unmanaged = stringified.moveToUnmanaged();
     // get id for setting a value
     const id = get_id();
+    const addr = get_addr(&unmanaged.items[0]);
     //set the value to be consumed as a return type of this function
-    set_value(id, &unmanaged.items[0], unmanaged.items.len);
+    set_value(id, addr, unmanaged.items.len);
     return id;
 }
 

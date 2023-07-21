@@ -113,10 +113,12 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
             state.return_values.insert(id, val_to_add).unwrap();
         }).unwrap();
 
-
         WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "get_id",
             || WASM_STATE.lock().unwrap().get_mut().get_id()
         ).unwrap();
+
+        WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "get_addr",
+            |addr: u32| addr).unwrap();
 
         WASM_STATE.lock().unwrap().borrow().wasms.clone()
     };
