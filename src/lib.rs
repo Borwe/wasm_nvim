@@ -7,7 +7,8 @@ mod nvim_interface;
 mod utils;
 mod wasm_state;
 
-use wasm_state::{WASM_STATE, WasmNvimState, Types, ValueFromWasm};
+use wasm_state::{WASM_STATE, WasmNvimState, Types, ValueFromWasm, WasmModule};
+use nvim_interface::{Functionality, add_functionality_to_module};
 
 fn get_api_minor_version(lua: &Lua)-> LuaResult<()>{
     let print = lua.globals().get::<_, LuaFunction>("print")?;
@@ -90,6 +91,7 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
     let wasms = {
         WASM_STATE.lock().unwrap().borrow_mut().set_lua(lua);
 
+        //setup the wasm functions to be exported and used from wasm side
         WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "set_value",
             |mut caller: Caller<'_, _>, id: u32, loc: u32, size: u32|{
             // Avoid locking through out this full function, once here means we are safe.
@@ -136,9 +138,20 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
             let mut state = unsafe {
                 &mut (*(WASM_STATE.lock().unwrap().get_mut() as *mut WasmNvimState))
             };
+
+
             let module = Module::from_file(&state.wasm_engine,wasm).unwrap();
-            state.linker.module(&mut state.store, wasm, &module).expect("linker module link fail");
-            let mut instance = state.linker.instantiate(&mut state.store , &module).unwrap();
+            let instance = state.linker.instantiate(&mut state.store , &module).unwrap();
+
+            //add module to list
+            state.wasm_modules.insert(wasm.clone(),
+                WasmModule::new(module, instance, wasm).unwrap());
+            let wasm_module = state.wasm_modules.get(wasm).unwrap();
+            let module = &wasm_module.module;
+            let instance = &wasm_module.instance;
+            //setup module
+            state.linker.module(&mut state.store, wasm, module).expect("linker module link fail");
+
             let functionality = instance
                 .get_typed_func::<(),u32>(&mut state.store, "functionality").unwrap();
 
@@ -146,13 +159,20 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
             let id = functionality.call(&mut state.store, ()).unwrap();
 
 
-            match state.get_value(id, Types::String).unwrap(){
-                ValueFromWasm::String(s) => utils::debug(lua, &format!("VAL: {}",s)).unwrap(),
+            let module_functionality = match state.get_value(id, Types::String).unwrap(){
+                ValueFromWasm::String(s) => s,
                 _ => panic!("Error loading functionality")
             };
 
-            //add module to list
-            state.wasm_modules.push(module);
+            utils::debug(lua, &format!("VAL: {}",module_functionality)).unwrap();
+
+            let functionalities: Vec<Functionality> = serde_json::from_str(&module_functionality)
+                .expect(&format!("returned values from functionality() of {wasm} not valid"));
+
+            for f in functionalities.iter(){
+                add_functionality_to_module(lua, f.clone(), wasm.to_string()).unwrap();
+            }
+
         }
 
         let wasm_path = std::path::PathBuf::from(wasm);
@@ -167,12 +187,11 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
             Ok(())
         }).unwrap();
 
-
         //manually add hi function
         wasm_plug.set::<_, LuaFunction>("hi", test_func);
 
         //add wasm_plug to be accessible from lua
-        utils::lua_require::<LuaTable>(lua, "wasm_nvim").unwrap()
+        utils::lua_this(lua).unwrap()
             .set::<_, _>(wasm.clone().to_lua(lua).unwrap(), wasm_plug).unwrap();
 
         utils::debug(lua, &format!("Loaded: {}",wasm));

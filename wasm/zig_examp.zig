@@ -8,7 +8,7 @@ extern "host" fn set_value(id: u32, loc: u32, size: u32) void;
 extern "host" fn get_id() u32;
 extern "host" fn get_addr(addr: *u8) u32;
 
-extern fn nvim_echo(start: *const u8, end: *const u8) void;
+extern "host" fn nvim_echo(start: *const u8, end: *const u8) void;
 
 const LuaTypes = enum(u8) { table, bool, number, empty };
 
@@ -54,13 +54,18 @@ fn getParamFromChunk(comptime T: type, comptime I: type, data: *const ArrayList(
     return .{ .type = @intFromEnum(LuaTypes.table), .start = end, .end = end };
 }
 
-const Functionality = struct {
-    name: []const u8, //hold name of function
-    params: []const u8, //hold params types, by order
+const Type = struct {
+    type: []const u8,
 };
 
-fn CreateFunctionality(comptime name: []const u8, comptime params: []const u8) Functionality {
-    return .{ .name = name, .params = params };
+const Functionality = struct {
+    name: []const u8, //hold name of function
+    params: Type, //hold params types, by order
+    returns: Type,
+};
+
+fn CreateFunctionality(comptime name: []const u8, comptime params: Type, comptime returns: Type) Functionality {
+    return .{ .name = name, .params = params, .returns = returns };
 }
 
 export fn alloc(size: u32) *u8 {
@@ -74,7 +79,7 @@ export fn dealloc(beg: *[]u8, _: u32) void {
 
 export fn functionality() u32 {
     var functions = ArrayList(Functionality).init(aloc);
-    _ = functions.append(CreateFunctionality("hipe", "void")) catch undefined;
+    _ = functions.append(CreateFunctionality("hipe", Type{ .type = "void" }, Type{ .type = "void" })) catch undefined;
     var stringified = ArrayList(u8).init(aloc);
     json.stringify(functions.items, .{}, stringified.writer()) catch undefined;
     var unmanaged = stringified.moveToUnmanaged();

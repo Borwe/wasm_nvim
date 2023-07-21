@@ -7,6 +7,10 @@ use wasmtime_wasi::WasiCtx;
 use mlua::prelude::*;
 use std::collections::HashMap;
 
+lazy_static! {
+    pub(crate) static ref WASM_STATE: Mutex<RefCell<WasmNvimState>> = Mutex::new(RefCell::new(WasmNvimState::new()));
+}
+
 pub(crate) enum Types {
     /// hold when reading values from a buffer to a string
     String, 
@@ -18,9 +22,22 @@ pub(crate) enum ValueFromWasm {
     Nonthing
 }
 
-lazy_static! {
-    pub(crate) static ref WASM_STATE: Mutex<RefCell<WasmNvimState>> = Mutex::new(RefCell::new(WasmNvimState::new()));
+pub(crate) struct WasmModule{
+    pub(crate) module: Module,
+    pub(crate) instance: Instance,
+    pub(crate) location: String
 }
+
+impl WasmModule{
+    pub(crate) fn new(module: Module, instance: Instance, wasm: &str) -> Result<Self>{
+        Ok(WasmModule{
+            module,
+            instance,
+            location: wasm.to_string()
+        })
+    }
+}
+
 
 pub(crate) struct WasmNvimState{
     pub(crate) wasms: Vec<String>,
@@ -29,9 +46,10 @@ pub(crate) struct WasmNvimState{
     pub(crate) wasm_engine: Engine,
     pub(crate) linker: Linker<WasiCtx>,
     pub(crate) store: Store<WasiCtx>,
-    pub(crate) wasm_modules: Vec<Module>,
+    pub(crate) wasm_modules: HashMap<String, WasmModule>,
     pub(crate) nvim_types: HashSet<String>,
     lua: Option<usize>,
+    /// The set values
     pub(crate) return_values: HashMap<u32, String>,
 }
 
@@ -59,7 +77,7 @@ impl WasmNvimState {
             wasm_engine,
             linker,
             store,
-            wasm_modules: Vec::new(),
+            wasm_modules: HashMap::new(),
             return_values: HashMap::new(),
             lua: None
         }
