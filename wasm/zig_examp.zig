@@ -4,8 +4,10 @@ const json = std.json;
 
 var aloc = std.heap.page_allocator;
 
-extern fn nvim_echo(start: *const u8, end: *const u8) void;
 extern "host" fn set_value(id: u32, loc: *u8, size: u32) void;
+extern "host" fn get_id() u32;
+
+extern fn nvim_echo(start: *const u8, end: *const u8) void;
 
 const LuaTypes = enum(u8) { table, bool, number, empty };
 
@@ -69,13 +71,17 @@ export fn dealloc(beg: *[]u8, _: u32) void {
     aloc.free(beg.*);
 }
 
-export fn functionality(id: u32) void {
+export fn functionality() u32 {
     var functions = ArrayList(Functionality).init(aloc);
     _ = functions.append(CreateFunctionality("hipe", "void")) catch undefined;
     var stringified = ArrayList(u8).init(aloc);
     json.stringify(functions.items, .{}, stringified.writer()) catch undefined;
     var unmanaged = stringified.moveToUnmanaged();
+    // get id for setting a value
+    const id = get_id();
+    //set the value to be consumed as a return type of this function
     set_value(id, &unmanaged.items[0], unmanaged.items.len);
+    return id;
 }
 
 /// All functions that export must have a start and and

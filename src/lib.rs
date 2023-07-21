@@ -66,6 +66,7 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
         .expect("Couldn't parse JSON");
 
     let functions = api_vals.get("functions").unwrap().as_array().unwrap();
+    utils::debug(lua, &format!("FUNCS ARE: {}",functions.len()))?;
 
     for func in functions.iter(){
         for params in func.get("parameters").unwrap().as_array().iter(){
@@ -109,12 +110,13 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
                 val_to_add.push(c);
             }
 
-
-            utils::debug(unsafe {&*state.get_lua().unwrap()}, &format!("SET ID: {} LOC: {}, SIZE: {}", id, loc, size));
-            //utils::debug(unsafe {&*state.get_lua().unwrap()}, &format!("GOT {}", result));
-
             state.return_values.insert(id, val_to_add).unwrap();
         }).unwrap();
+
+
+        WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "get_id",
+            || WASM_STATE.lock().unwrap().get_mut().get_id()
+        ).unwrap();
 
         WASM_STATE.lock().unwrap().borrow().wasms.clone()
     };
@@ -129,19 +131,17 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
 
         //get and add module
         {
-            let (mut state, id) = unsafe {
-                let id = WASM_STATE.lock().unwrap().get_mut().get_id();
-                let state = &mut (*(WASM_STATE.lock().unwrap().get_mut() as *mut WasmNvimState));
-                (state, id)
+            let mut state = unsafe {
+                &mut (*(WASM_STATE.lock().unwrap().get_mut() as *mut WasmNvimState))
             };
             let module = Module::from_file(&state.wasm_engine,wasm).unwrap();
             state.linker.module(&mut state.store, wasm, &module).expect("linker module link fail");
             let mut instance = state.linker.instantiate(&mut state.store , &module).unwrap();
             let functionality = instance
-                .get_typed_func::<u32,()>(&mut state.store, "functionality").unwrap();
+                .get_typed_func::<(),u32>(&mut state.store, "functionality").unwrap();
 
             //get functionality exported from module
-            functionality.call(&mut state.store, id).unwrap();
+            let id = functionality.call(&mut state.store, ()).unwrap();
 
 
             match state.get_value(id, Types::String).unwrap(){

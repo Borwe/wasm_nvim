@@ -149,10 +149,10 @@ We would need an allocation and deallocation function implementation on every wa
   
 
 - ```zig
-  extern "host" return_value(id: u32, loc: *u8, size: u32) void;
+  extern "host" set_value(id: u32, loc: *u8, size: u32) void;
   ```
 
-  Used for returning a value to the `wasm_nvim` library or to the outside world from the wasm module using it. Users of this method should make sure the relinquish control of any thing the pointer is pointing to.
+  Used for returning/setting a value to the `wasm_nvim` library or to the outside world from the wasm module using it. Users of this method should make sure the relinquish memory control of any thing the pointer is pointing to.
 
 
 ## Types representations
