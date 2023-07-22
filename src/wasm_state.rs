@@ -36,6 +36,19 @@ impl WasmModule{
             location: wasm.to_string()
         })
     }
+
+    pub(crate) fn get_name(&self) -> String{
+        std::path::PathBuf::from(&self.location).as_path()
+            .file_stem().unwrap().to_string_lossy()
+            .to_string()
+    }
+
+
+    pub(crate) fn get_name_from_str(path: &str) -> String{
+        std::path::PathBuf::from(path).as_path()
+            .file_stem().unwrap().to_string_lossy()
+            .to_string()
+    }
 }
 
 

@@ -122,6 +122,9 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
         WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "get_addr",
             |addr: u32| addr).unwrap();
 
+        WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_echo",
+            nvim_interface::nvim_echo).unwrap();
+
         WASM_STATE.lock().unwrap().borrow().wasms.clone()
     };
 
@@ -177,22 +180,6 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
 
         let wasm_path = std::path::PathBuf::from(wasm);
         let wasm = wasm_path.file_stem().unwrap().to_str().unwrap();
-
-        let wasm_plug = lua.create_table().unwrap();
-
-
-        let test_func = lua.create_function(
-            |lua: &Lua, _: LuaValue|{
-            utils::debug(lua, "LUA TEST!!!!!")?;
-            Ok(())
-        }).unwrap();
-
-        //manually add hi function
-        wasm_plug.set::<_, LuaFunction>("hi", test_func);
-
-        //add wasm_plug to be accessible from lua
-        utils::lua_this(lua).unwrap()
-            .set::<_, _>(wasm.clone().to_lua(lua).unwrap(), wasm_plug).unwrap();
 
         utils::debug(lua, &format!("Loaded: {}",wasm));
     });

@@ -7,8 +7,7 @@ var aloc = std.heap.page_allocator;
 extern "host" fn set_value(id: u32, loc: u32, size: u32) void;
 extern "host" fn get_id() u32;
 extern "host" fn get_addr(addr: *u8) u32;
-
-extern "host" fn nvim_echo(start: *const u8, end: *const u8) void;
+extern "host" fn nvim_echo(id: u32) void;
 
 const LuaTypes = enum(u8) { table, bool, number, empty };
 
@@ -79,7 +78,7 @@ export fn dealloc(beg: *[]u8, _: u32) void {
 
 export fn functionality() u32 {
     var functions = ArrayList(Functionality).init(aloc);
-    _ = functions.append(CreateFunctionality("hipe", Type{ .type = "void" }, Type{ .type = "void" })) catch undefined;
+    _ = functions.append(CreateFunctionality("hi", Type{ .type = "void" }, Type{ .type = "void" })) catch undefined;
     var stringified = ArrayList(u8).init(aloc);
     json.stringify(functions.items, .{}, stringified.writer()) catch undefined;
     var unmanaged = stringified.moveToUnmanaged();
@@ -96,36 +95,21 @@ export fn functionality() u32 {
 /// where the return value is. returned values would be freed
 /// from the wasm_nvim library end
 export fn hi() void {
-    const stdout = std.io.getStdOut().writer();
-
-    _ = stdout.write("HELLO WASM ZIG\n") catch undefined;
-
+    const Echo = struct { chunk: ArrayList(ArrayList(ArrayList(u8))), history: bool, opts: ArrayList(ArrayList(u8)) };
     // create a chunk of strings, which is a {{}}. An Array list in an arraylist
     var arr = ArrayList(ArrayList(ArrayList(u8))).init(aloc);
     var in = ArrayList(ArrayList(u8)).init(aloc);
     var value = ArrayList(u8).init(aloc);
-    _ = value.appendSlice("YEAH BABY WASM ZIG IS GANGSTA FOR REAL FOR REAL YO!!!!") catch undefined;
+    _ = value.appendSlice("YEAH BABY! WASM ZIG IS GANGSTA FOR REAL FOR REAL YO!!!!") catch undefined;
     _ = in.append(value) catch undefined;
     _ = arr.append(in) catch undefined;
 
-    const chunk = getParamFromChunk(ArrayList(u8), u8, &arr, true) catch undefined;
-    const hold_message = getParam(bool, &true, LuaTypes.bool) catch undefined;
-    const opts = getParam(comptime_int, &0, LuaTypes.empty) catch undefined;
-    //const testString = "YOLO";
-    //_ = getParam(@TypeOf(testString), &testString, LuaTypes.empty) catch undefined;
-
-    var params = ArrayList(Param).init(aloc);
-    //_ = params.append(chunk) catch undefined;
-    _ = params.append(chunk) catch undefined;
-    _ = params.append(hold_message) catch undefined;
-    _ = params.append(opts) catch undefined;
-
-    var return_params = ArrayList(u8).init(aloc);
-    //_ = json.stringify(params, .{}, return_params.writer()) catch undefined;
-
-    //pring what would be sent to wasm_nvim side
-    _ = stdout.write(return_params.items) catch undefined;
-    _ = stdout.write("\n") catch undefined;
+    var to_echo = Echo{ .chunk = arr, .history = true, .opts = ArrayList(ArrayList(u8)).init(aloc) };
+    var to_echo_str = ArrayList(u8).init(aloc);
+    _ = json.stringify(to_echo, .{}, to_echo_str.writer()) catch undefined;
+    const id = get_id();
+    set_value(id, get_addr(*to_echo_str.items[0]), to_echo_str.items.len());
+    nvim_echo(id);
 }
 
 //pub fn main() !void {

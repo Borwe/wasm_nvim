@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use mlua::prelude::*;
-use crate::{utils, wasm_state::WasmNvimState};
+use crate::{utils, wasm_state::{WasmNvimState, WasmModule}};
 use wasmtime::*;
 use crate::wasm_state::WASM_STATE;
 
@@ -18,8 +18,10 @@ pub(crate) struct Functionality{
 
 pub(crate) fn add_functionality_to_module(lua: &Lua,
     functionality: Functionality, wasm_file: String)-> LuaResult<()>{
-    let wasm_file_clone = wasm_file.clone();
+    let wasm_name = WasmModule::get_name_from_str(&wasm_file);
+    utils::debug(lua, &format!("WASM IS: {}", wasm_name));
     let func_name = functionality.name.clone();
+
     let func = move |_: &Lua, _: LuaValue|{
         let state = unsafe {
             &mut *(WASM_STATE.lock().unwrap().get_mut() as *mut WasmNvimState)
@@ -32,9 +34,21 @@ pub(crate) fn add_functionality_to_module(lua: &Lua,
             .expect(&format!("error in calling {}",&func_name));
         Ok(())
     };
+
     utils::debug(lua, &format!("FUNC IS: {}", functionality.name));
-    utils::lua_this(lua)?
-        .set::<_, LuaFunction>(functionality.name.as_str(), lua.create_function(func)?);
+    let wasm_nvim = utils::lua_this(lua)?;
+    match wasm_nvim.get::<_, LuaTable>(wasm_name.as_str()){
+        Ok(table) => {
+            table.set::<_, LuaFunction>(functionality.name.as_str(), lua.create_function(func)?)
+        },
+        Err(_) => {
+            let table = lua.create_table()?;
+            table.set::<_, LuaFunction>(functionality.name.as_str(), lua.create_function(func)?)?;
+            wasm_nvim.set(wasm_name, table)
+        }
+    }
+        
+        ;
     Ok(())
 }
 
@@ -52,4 +66,7 @@ struct InterOpLocation {
 struct InterOpValue {
     info: String,
     loc: InterOpLocation,
+}
+
+pub(crate) fn nvim_echo(id: u32, lock: u32, size: u32){
 }
