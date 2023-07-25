@@ -45,6 +45,8 @@ We would need an allocation and deallocation function implementation on every wa
 
   
 
+## [Neovim APIs implemented](./API.md)
+
 
 
 ## Exposed Useful Functions from Wasm_Nvim
