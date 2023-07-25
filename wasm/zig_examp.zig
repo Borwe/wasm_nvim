@@ -61,9 +61,9 @@ fn CreateFunctionality(comptime name: []const u8, comptime params: Type, comptim
     return .{ .name = name, .params = params, .returns = returns };
 }
 
-export fn alloc(size: u32) *u8 {
+export fn alloc(size: u32) u32 {
     var buf = aloc.alloc(u8, size) catch undefined;
-    return &buf[0];
+    return get_addr(&buf[0]);
 }
 
 export fn dealloc(beg: *[]u8, _: u32) void {
@@ -111,12 +111,3 @@ export fn hi() void {
     set_value(id, get_addr(&to_echo_str.items[0]), to_echo_str.items.len);
     nvim_echo(id);
 }
-
-//pub fn main() !void {
-//var val = functionality();
-//var prt: *[]u8 = @as(*[]u8, @ptrFromInt(val.*[0]));
-//std.io.getStdOut().writer().print("VALSTR:{s}\n", .{prt.*}) catch unreachable;
-//std.io.getStdOut().writer().print("VAL_AT: {d}\n", .{val.*[0]}) catch unreachable;
-
-//hi();
-//}
