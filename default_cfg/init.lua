@@ -7,6 +7,5 @@ wasm.setup {
 --show types current supported from neovim version
 -- wasm.print_nvim_types()
 
--- call a function from a wasm module hi, that prints hi
--- to at the bottom of neovim
+-- call a hi function from a wasm module zig_examp, some cool text
 wasm.zig_examp.hi()

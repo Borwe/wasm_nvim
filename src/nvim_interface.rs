@@ -4,6 +4,14 @@ use crate::{utils, wasm_state::{WasmNvimState, WasmModule}};
 use wasmtime::*;
 use crate::wasm_state::WASM_STATE;
 
+/// Used by nvim_echo
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct NvimEcho{
+    chunk: Vec<Vec<String>>,
+    history: bool,
+    opts: Vec<String>
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub(crate) struct Type{
     r#type: String
@@ -68,5 +76,12 @@ struct InterOpValue {
     loc: InterOpLocation,
 }
 
-pub(crate) fn nvim_echo(id: u32, lock: u32, size: u32){
+pub(crate) fn nvim_echo(id: u32){
+    let lua = unsafe{ &*WASM_STATE.lock().unwrap().borrow().get_lua().unwrap()} ;
+    let json = WASM_STATE.lock().unwrap().get_mut()
+        .get_value(id).unwrap();
+    let nvim_echo: NvimEcho = serde_json::from_str(&json).unwrap();
+
+    let echo_fn = utils::lua_vim_api(lua).unwrap().get::<_, LuaFunction>("nvim_echo").unwrap();
+    echo_fn.call::<_, ()>((nvim_echo.chunk, nvim_echo.history, nvim_echo.opts)).unwrap();
 }

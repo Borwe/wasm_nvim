@@ -11,47 +11,41 @@ extern "host" fn nvim_echo(id: u32) void;
 
 const LuaTypes = enum(u8) { table, bool, number, empty };
 
-const Param = struct {
-    type: u8,
-    start: u64,
-    end: u64,
-};
-
-// generate param field from basic types
-// bool, float, double, string
-fn getParam(comptime T: type, data: *const T, lua_type: LuaTypes) !Param {
-    const size = @sizeOf(T);
-    const start = @intFromPtr(data);
-    const end = start + size;
-    try std.io.getStdOut().writer().print("TYPE: {s}, START: {d}, END: {d} SIZE:{d}\n", .{ @typeName(T), start, end, size });
-    return .{ .type = @intFromEnum(lua_type), .start = end, .end = end };
-}
-
-// generate param field from a chunk,
-// which contains {{ with normal basic types inside}}
-// bool, float, double, string
-fn getParamFromChunk(comptime T: type, comptime I: type, data: *const ArrayList(ArrayList(T)), comptime innerIsList: bool) !Param {
-    const start = @intFromPtr(data);
-    var end: u64 = 0;
-    var size: u64 = 0;
-    if (innerIsList == false) {
-        //get end of item
-        const items = data.*.items[0].items[0];
-        end = start + (@sizeOf(I) * items.len()) + @sizeOf(I);
-        size = items.len();
-    } else {
-        //meaning our inner items is a list
-        const items = data.*.items[0].items[0];
-        var endPointer: *I = undefined;
-        for (items.items) |*i| {
-            size += 1;
-            endPointer = i;
+const Echo = struct {
+    chunk: ArrayList(ArrayList(ArrayList(ArrayList(u8)))),
+    history: bool,
+    opts: ArrayList(ArrayList(u8)),
+    pub fn jsonStringify(self: *const Echo, _: json.StringifyOptions, stream: anytype) !void {
+        var writer = json.writeStream(stream, @sizeOf(Echo) + 9000);
+        try writer.beginObject();
+        try writer.objectField("chunk");
+        for (self.*.chunk.items) |*array| {
+            try writer.beginArray();
+            for (array.*.items) |*arr| {
+                try writer.arrayElem();
+                try writer.beginArray();
+                for (arr.*.items) |*item| {
+                    try writer.arrayElem();
+                    try writer.emitString(item.*.items);
+                }
+                try writer.endArray();
+            }
+            try writer.endArray();
         }
-        end = @intFromPtr(endPointer) + @sizeOf(I);
+
+        try writer.objectField("history");
+        try writer.emitBool(self.*.history);
+
+        try writer.objectField("opts");
+        try writer.beginArray();
+        for (self.*.opts.items) |*arr| {
+            try writer.emitString(arr.*.items);
+        }
+        try writer.endArray();
+
+        try writer.endObject();
     }
-    try std.io.getStdOut().writer().print("TYPE: {s}, START: {d}, END: {d} SIZE:{d}\n", .{ @typeName(ArrayList(ArrayList(T))), start, end, size });
-    return .{ .type = @intFromEnum(LuaTypes.table), .start = end, .end = end };
-}
+};
 
 const Type = struct {
     type: []const u8,
@@ -95,20 +89,26 @@ export fn functionality() u32 {
 /// where the return value is. returned values would be freed
 /// from the wasm_nvim library end
 export fn hi() void {
-    const Echo = struct { chunk: ArrayList(ArrayList(ArrayList(u8))), history: bool, opts: ArrayList(ArrayList(u8)) };
     // create a chunk of strings, which is a {{}}. An Array list in an arraylist
+    var chunk = ArrayList(ArrayList(ArrayList(ArrayList(u8)))).init(aloc);
     var arr = ArrayList(ArrayList(ArrayList(u8))).init(aloc);
     var in = ArrayList(ArrayList(u8)).init(aloc);
     var value = ArrayList(u8).init(aloc);
+    var value2 = ArrayList(u8).init(aloc);
     _ = value.appendSlice("YEAH BABY! WASM ZIG IS GANGSTA FOR REAL FOR REAL YO!!!!") catch undefined;
+    _ = value2.appendSlice("ErrorMsg") catch undefined;
     _ = in.append(value) catch undefined;
+    _ = in.append(value2) catch undefined;
     _ = arr.append(in) catch undefined;
+    _ = chunk.append(arr) catch undefined;
 
-    var to_echo = Echo{ .chunk = arr, .history = true, .opts = ArrayList(ArrayList(u8)).init(aloc) };
+    var to_echo = Echo{ .chunk = chunk, .history = true, .opts = ArrayList(ArrayList(u8)).init(aloc) };
+
     var to_echo_str = ArrayList(u8).init(aloc);
-    _ = json.stringify(to_echo, .{}, to_echo_str.writer()) catch undefined;
+    _ = json.stringify(to_echo, .{}, to_echo_str.writer()) catch unreachable;
+
     const id = get_id();
-    set_value(id, get_addr(*to_echo_str.items[0]), to_echo_str.items.len());
+    set_value(id, get_addr(&to_echo_str.items[0]), to_echo_str.items.len);
     nvim_echo(id);
 }
 

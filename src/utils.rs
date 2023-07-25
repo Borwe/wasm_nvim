@@ -25,6 +25,11 @@ pub fn lua_this<'a>(lua: &'a Lua) -> LuaResult<LuaTable>{
     lua_require::<'a, LuaTable>(lua, "wasm_nvim")
 }
 
+pub fn lua_vim_api<'a>(lua: &'a Lua)-> LuaResult<LuaTable>{
+    lua.globals().get::<_, LuaTable>("vim")?
+        .get::<_, LuaTable>("api")
+}
+
 /// Transform normal anyhowResult to LuaResult
 pub fn to_lua_result<R>(result: Result<R>, error: Option<&str>) -> LuaResult<R>{
     match result {

@@ -162,10 +162,7 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
             let id = functionality.call(&mut state.store, ()).unwrap();
 
 
-            let module_functionality = match state.get_value(id, Types::String).unwrap(){
-                ValueFromWasm::String(s) => s,
-                _ => panic!("Error loading functionality")
-            };
+            let module_functionality = state.get_value(id).unwrap();
 
             utils::debug(lua, &format!("VAL: {}",module_functionality)).unwrap();
 

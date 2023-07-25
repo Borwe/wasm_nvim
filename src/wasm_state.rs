@@ -115,17 +115,8 @@ impl WasmNvimState {
     }
 
 
-    pub(crate) fn get_value(&mut self, id: u32, ty: Types) -> Result<ValueFromWasm> {
-        match ty {
-            Types::String => {
-                let value = match self.return_values.remove(&id) {
-                    Some(x) => x,
-                    None => panic!("Key: {} has no value associated", id)
-                };
-                Ok(ValueFromWasm::String(value))
-            },
-            _ => panic!("Not implemented yet")
-        }
+    pub(crate) fn get_value(&mut self, id: u32) -> Option<String> {
+        self.return_values.remove(&id)
     }
 
     pub(crate) fn get_lua(&self) -> Option<*const Lua>{
