@@ -79,11 +79,6 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
         }
     }
 
-    //utils::debug(lua, apis_json.to_str()?)?;
-    //WASM_STATE.lock().unwrap().get_mut().linker.func_wrap("","nvim_echo",
-    //  |ctx: wasmtime::Caller<'_, _>, beg: u32, end: u32|{
-    //      //utils::debug(lua, "WOOOOOOOOOOOOOOOT!").unwrap();
-    //});
     Ok(())
 }
 
@@ -93,7 +88,7 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
 
         //setup the wasm functions to be exported and used from wasm side
         WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "set_value",
-            |mut caller: Caller<'_, _>, id: u32, loc: u32, size: u32|{
+            |mut caller: Caller<'_, _>, id: u32, loc: i32, size: u32|{
             // Avoid locking through out this full function, once here means we are safe.
             let state = unsafe {
                 &mut (*(WASM_STATE.lock().unwrap().get_mut() as *mut WasmNvimState))
@@ -111,6 +106,16 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
                 };
                 val_to_add.push(c);
             }
+
+            utils::debug(unsafe{
+                &*state.get_lua().unwrap()
+            }, &format!("ID: {id} VAL: {val_to_add} PTR: {loc}"));
+
+            let mut returns: Vec<Val> = Vec::new();
+            let mut vals: Vec<Val> = vec![Val::from(loc), Val::from(size as i32)];
+            
+            let dealloc = caller.get_export("dealloc").unwrap().into_func().unwrap();
+            dealloc.call(&mut state.store, &vals, &mut returns).unwrap();
 
             state.return_values.insert(id, val_to_add).unwrap();
         }).unwrap();

@@ -1,8 +1,10 @@
 const std = @import("std");
 const ArrayList = std.ArrayList;
+const ArrayListUnManaged = std.ArrayListUnmanaged;
 const json = std.json;
 
-var aloc = std.heap.page_allocator;
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+var aloc = gpa.allocator();
 
 extern "host" fn set_value(id: u32, loc: u32, size: u32) void;
 extern "host" fn get_id() u32;
@@ -66,8 +68,8 @@ export fn alloc(size: u32) u32 {
     return get_addr(&buf[0]);
 }
 
-export fn dealloc(beg: *[]u8, _: u32) void {
-    aloc.free(beg.*);
+export fn dealloc(arr: [*]u8, size: u32) void {
+    aloc.free(arr[0..size]);
 }
 
 export fn functionality() u32 {
@@ -104,8 +106,8 @@ export fn hi() void {
 
     var to_echo = Echo{ .chunk = chunk, .history = true, .opts = ArrayList(ArrayList(u8)).init(aloc) };
 
-    var to_echo_str = ArrayList(u8).init(aloc);
-    _ = json.stringify(to_echo, .{}, to_echo_str.writer()) catch unreachable;
+    var to_echo_str = ArrayListUnManaged(u8).initCapacity(aloc, 1000) catch undefined;
+    _ = json.stringify(to_echo, .{}, to_echo_str.writer(aloc)) catch unreachable;
 
     const id = get_id();
     set_value(id, get_addr(&to_echo_str.items[0]), to_echo_str.items.len);
