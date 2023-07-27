@@ -130,6 +130,9 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
         WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_echo",
             nvim_interface::nvim_echo).unwrap();
 
+        WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_create_augroup",
+            nvim_interface::nvim_create_augroup).unwrap();
+
         WASM_STATE.lock().unwrap().borrow().wasms.clone()
     };
 
