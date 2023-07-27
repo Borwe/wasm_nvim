@@ -1,10 +1,8 @@
 const std = @import("std");
 const ArrayList = std.ArrayList;
-const ArrayListUnManaged = std.ArrayListUnmanaged;
 const json = std.json;
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-var aloc = gpa.allocator();
+var aloc = std.heap.page_allocator;
 
 extern "host" fn set_value(id: u32, loc: u32, size: u32) void;
 extern "host" fn get_id() u32;
@@ -18,7 +16,7 @@ const Echo = struct {
     history: bool,
     opts: ArrayList(ArrayList(u8)),
     pub fn jsonStringify(self: *const Echo, _: json.StringifyOptions, stream: anytype) !void {
-        var writer = json.writeStream(stream, @sizeOf(Echo) + 9000);
+        var writer = json.writeStream(stream, @sizeOf(Echo));
         try writer.beginObject();
         try writer.objectField("chunk");
         for (self.*.chunk.items) |*array| {
@@ -106,8 +104,8 @@ export fn hi() void {
 
     var to_echo = Echo{ .chunk = chunk, .history = true, .opts = ArrayList(ArrayList(u8)).init(aloc) };
 
-    var to_echo_str = ArrayListUnManaged(u8).initCapacity(aloc, 1000) catch undefined;
-    _ = json.stringify(to_echo, .{}, to_echo_str.writer(aloc)) catch unreachable;
+    var to_echo_str = ArrayList(u8).init(aloc);
+    _ = json.stringify(to_echo, .{}, to_echo_str.writer()) catch unreachable;
 
     const id = get_id();
     set_value(id, get_addr(&to_echo_str.items[0]), to_echo_str.items.len);

@@ -7,26 +7,24 @@ command = "zig"
 cwd = "./wasm"
 args = ["build-lib","zig_examp.zig","-target","wasm32-wasi", "-dynamic", "-rdynamic"]
 
-[tasks.zig_run]
-command = "wasmtime"
-cwd = "./wasm"
-args = ["zig_examp.wasm"]
-dependencies = ["zig_main"]
+[tasks.nvim]
+command = "nvim"
+args = ["-u","NONE","-l","./default_cfg/init.lua"]
+dependencies = ["move","zig_wasm"]
 
-[tasks.zig_main]
-command = "zig"
-cwd = "./wasm"
-args = ["build-exe","zig_examp.zig","-target","wasm32-wasi"]
+[tasks.move]
+windows_alias = "move_win"
 
-[tasks.nvimqt]
-command = "nvim-qt"
-args = ["--","-u",".\\default_cfg\\init.lua"]
-dependencies = ["move_win","zig_wasm"]
+[tasks.build]
+windows_alias = "build_win"
+
+[tasks.docs]
+windows_alias = "docs_win"
 
 [tasks.move_win]
 script-runner = "@shell"
 script = '''copy .\target\release\wasm_nvim.dll .\'''
-dependencies = ["build_win"]
+dependencies = ["build"]
 
 [tasks.build_win]
 script-runner = "powershell"
