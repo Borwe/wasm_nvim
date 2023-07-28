@@ -1,6 +1,6 @@
 # Currently implemented nvim APIs
 
-## nvim_echo
+## 1. nvim_echo
 ``` zig
 extern "host" fn nvim_echo(id: u32) void;
 ```
@@ -12,5 +12,19 @@ extern "host" fn nvim_echo(id: u32) void;
     "chunk": [["hello", "errorMsg"]],
     "history": true,
     "opts": []
+  }
+  ```
+
+## 2. nvim_create_augroup
+```zig
+extern "host" nvim_create_augroup(id: u32) u64
+```
+  - Importation from module would look like this.
+  - It returns the id of the augroup, and consumes the value related to the id passed using `set_value` that points to a json memory.
+  - The json passed would like like:
+  ```json
+  {
+    "name": "group_name",
+    "clear": bool
   }
   ```
