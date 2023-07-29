@@ -1,5 +1,4 @@
 use mlua::prelude::*;
-use anyhow::Result;
 use wasmtime::*;
 use std::str::FromStr;
 
@@ -7,25 +6,10 @@ mod nvim_interface;
 mod utils;
 mod wasm_state;
 
-use wasm_state::{WASM_STATE, WasmNvimState, Types, ValueFromWasm, WasmModule};
+use wasm_state::{WASM_STATE, WasmNvimState, WasmModule};
 use nvim_interface::{Functionality, add_functionality_to_module};
 
-fn get_api_minor_version(lua: &Lua)-> LuaResult<()>{
-    let print = lua.globals().get::<_, LuaFunction>("print")?;
-    let vim = lua.globals().get::<_, LuaTable>("vim")?;
-    let apis = vim.get::<_, LuaTable>("fn")?
-        .get::<_, LuaFunction>("api_info")?
-        .call::<(),LuaTable>(())?;
-
-    let inspect: LuaTable = vim.get("inspect")?;
-    print.call::<_, ()>("HEHE")?;
-    let apis_to_print = inspect.call::<_, LuaString>(vim.clone())?;
-
-    print.call::<_, ()>(apis_to_print)?;
-    Ok(())
-}
-
-fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
+fn parse_wasm_dir(_: &Lua, settings: &LuaTable)-> LuaResult<()>{
     
     match settings.get::<_, bool>("debug") {
         Ok(x) => WASM_STATE.lock().unwrap().get_mut().debug = x,
@@ -55,7 +39,6 @@ fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
 }
 
 fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
-    use std::collections::HashSet;
     let api_table: LuaTable = lua.globals().get::<_, LuaTable>("vim")?
         .get::<_,LuaTable>("fn")?
         .get::<_, LuaFunction>("api_info")?.call::<_, LuaTable>(())?;
@@ -93,7 +76,7 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
             let state = unsafe {
                 &mut (*(WASM_STATE.lock().unwrap().get_mut() as *mut WasmNvimState))
             };
-            let mut mem = caller.get_export("memory").unwrap().into_memory().unwrap();
+            let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
             let mut ptr = unsafe {
                 mem.data_ptr(&state.store).offset(loc as isize) as *const u8
             };
@@ -109,10 +92,10 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
 
             utils::debug(unsafe{
                 &*state.get_lua().unwrap()
-            }, &format!("ID: {id} VAL: {val_to_add} PTR: {loc}"));
+            }, &format!("ID: {id} VAL: {val_to_add} PTR: {loc}")).unwrap();
 
             let mut returns: Vec<Val> = Vec::new();
-            let mut vals: Vec<Val> = vec![Val::from(loc), Val::from(size as i32)];
+            let vals: Vec<Val> = vec![Val::from(loc), Val::from(size as i32)];
             
             let dealloc = caller.get_export("dealloc").unwrap().into_func().unwrap();
             dealloc.call(&mut state.store, &vals, &mut returns).unwrap();
@@ -146,7 +129,7 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
 
         //get and add module
         {
-            let mut state = unsafe {
+            let state = unsafe {
                 &mut (*(WASM_STATE.lock().unwrap().get_mut() as *mut WasmNvimState))
             };
 
@@ -186,7 +169,7 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
         let wasm_path = std::path::PathBuf::from(wasm);
         let wasm = wasm_path.file_stem().unwrap().to_str().unwrap();
 
-        utils::debug(lua, &format!("Loaded: {}",wasm));
+        utils::debug(lua, &format!("Loaded: {}",wasm)).unwrap();
     });
     Ok(())
 }

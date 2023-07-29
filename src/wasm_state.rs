@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
-use std::{cell::{RefCell, Ref}, io::Read, collections::HashSet};
+use std::{cell::RefCell, collections::HashSet};
 use anyhow::Result;
-use std::sync::{Mutex, Arc};
+use std::sync::Mutex;
 use wasmtime::*;
 use wasmtime_wasi::WasiCtx;
 use mlua::prelude::*;
@@ -80,7 +80,7 @@ impl WasmNvimState {
             .inherit_stdio().build();
 
 
-        let mut store = Store::new(&wasm_engine, wasi );
+        let store = Store::new(&wasm_engine, wasi );
 
         WasmNvimState{
             wasms: Vec::new(),
@@ -121,18 +121,14 @@ impl WasmNvimState {
 
     pub(crate) fn get_lua(&self) -> Option<*const Lua>{
         match self.lua {
-            Some(addr) => unsafe {
-                Some(addr as *const Lua)
-            },
+            Some(addr) => Some(addr as *const Lua),
             None => None
         }
     }
 
 
     pub(crate) fn set_lua(&mut self, lua: &Lua) {
-        unsafe {
             let addr = (lua as *const _) as usize;
             self.lua = Some(addr);
-        }
     }
 }

@@ -29,14 +29,3 @@ pub fn lua_vim_api<'a>(lua: &'a Lua)-> LuaResult<LuaTable>{
     lua.globals().get::<_, LuaTable>("vim")?
         .get::<_, LuaTable>("api")
 }
-
-/// Transform normal anyhowResult to LuaResult
-pub fn to_lua_result<R>(result: Result<R>, error: Option<&str>) -> LuaResult<R>{
-    match result {
-        Ok(x) => Ok(x),
-        Err(e) =>  match error {
-            Some(x) => generate_error(x),
-            None => Err(mlua::Error::RuntimeError(e.to_string()))
-        }
-    }
-}

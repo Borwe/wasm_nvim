@@ -16,7 +16,7 @@ dependencies = ["move","zig_test"]
 [tasks.zig_perf]
 command = "zig"
 cwd = "./wasm"
-args = ["build-lib","perf.zig","-target","wasm32-wasi", "-dynamic", "-rdynamic", "-O", "ReleaseSafe"]
+args = ["build-lib","perf.zig","-target","wasm32-wasi", "-dynamic", "-rdynamic", "-O", "ReleaseFast"]
 
 [tasks.zig_test]
 command = "zig"

@@ -1,7 +1,6 @@
 use serde::{Serialize, Deserialize};
 use mlua::prelude::*;
 use crate::{utils, wasm_state::{WasmNvimState, WasmModule}};
-use wasmtime::*;
 use crate::wasm_state::WASM_STATE;
 
 /// Used by nvim_create_augroup
@@ -34,7 +33,7 @@ pub(crate) struct Functionality{
 pub(crate) fn add_functionality_to_module(lua: &Lua,
     functionality: Functionality, wasm_file: String)-> LuaResult<()>{
     let wasm_name = WasmModule::get_name_from_str(&wasm_file);
-    utils::debug(lua, &format!("WASM IS: {}", wasm_name));
+    utils::debug(lua, &format!("WASM IS: {}", wasm_name))?;
     let func_name = functionality.name.clone();
 
     let func = move |_: &Lua, _: LuaValue|{
@@ -50,7 +49,7 @@ pub(crate) fn add_functionality_to_module(lua: &Lua,
         Ok(())
     };
 
-    utils::debug(lua, &format!("FUNC IS: {}", functionality.name));
+    utils::debug(lua, &format!("FUNC IS: {}", functionality.name))?;
     let wasm_nvim = utils::lua_this(lua)?;
     match wasm_nvim.get::<_, LuaTable>(wasm_name.as_str()){
         Ok(table) => {
@@ -61,12 +60,7 @@ pub(crate) fn add_functionality_to_module(lua: &Lua,
             table.set::<_, LuaFunction>(functionality.name.as_str(), lua.create_function(func)?)?;
             wasm_nvim.set(wasm_name, table)
         }
-    };
-    Ok(())
-}
-
-enum Types {
-    Bool, Number, Chunk, Array, Table
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -100,8 +94,8 @@ pub(crate) fn nvim_create_augroup(id: u32)-> i64{
     let nvim_create_augroup_fn = utils::lua_vim_api(lua)
         .unwrap().get::<_, LuaFunction>("nvim_create_augroup").unwrap();
 
-    let mut name: LuaString = lua.create_string(nvim_create_augroup.name.as_str()).unwrap();
-    let mut opts = lua.create_table().unwrap();
+    let name: LuaString = lua.create_string(nvim_create_augroup.name.as_str()).unwrap();
+    let opts = lua.create_table().unwrap();
     opts.set("clear", nvim_create_augroup.clear).unwrap();
 
     nvim_create_augroup_fn.call::<_, LuaInteger>((name, opts)).unwrap()
