@@ -1,14 +1,29 @@
-# <u>Currently still under construction</u>
+# <u>:construction:Currently still under construction:construction:</u>
 
 ## Aim:
 
 Write a library to interface between Lua, and wasm, for enabling communication between plugins and the Neovim apis. The library language is Rust, as it is to be dynamically loaded via lua, using the neovim, instead of going via the rpc route which creates a networking bottleneck between two or more different process, this route allows for a single process **(NEOVIM)** , while also a plugin ecosystem that allows any programming language that can compile to wasm.
 
-**NOTE:** Bench marks still to be done to determine if this is faster or slower vs just normal lua plugins as project still not at MVP stage yet.
+## Performance:
+
+There is a poor mans performance test implementation, that imitates [Bram's implementation](https://github.com/vim/vim/blob/master/README_VIM9.md) of just summing a number inside a for loop, more will be done later, but as it appears now, wasm is faster than luajit atleast on my Windows 10 machine as you can see from the results:
+![1690628636000](C:\Users\Brian\AppData\Roaming\Typora\typora-user-images\1690628636000.png)
+
+Wasm version is atleast 30% faster than luajit/neovim version.
+To run this test simply run the bellow:
+
+```sh
+cargo make perf
+```
+
+Requires `cargo-make` which can be installed by `cargo install cargo-make` .
+**NOTE: Current test only runs on Windows 10. That's the machine I have.**
 
 ## READING:
 
  - [Wasm memory allocation and dealocation](https://radu-matei.com/blog/practical-guide-to-wasm-memory/)
+
+
 
 ## Theory
 
