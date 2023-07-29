@@ -2,10 +2,21 @@
 command = "cargo"
 args = ["clean"]
 
+
+[tasks.perf]
+command = "nvim"
+args = ["-u","NONE","-l","./default_cfg/perf.lua"]
+dependencies = ["move","zig_perf"]
+
 [tasks.test]
 command = "nvim"
 args = ["-u","NONE","-l","./default_cfg/testing.lua"]
 dependencies = ["move","zig_test"]
+
+[tasks.zig_perf]
+command = "zig"
+cwd = "./wasm"
+args = ["build-lib","perf.zig","-target","wasm32-wasi", "-dynamic", "-rdynamic", "-O", "ReleaseSafe"]
 
 [tasks.zig_test]
 command = "zig"

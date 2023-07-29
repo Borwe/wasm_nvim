@@ -61,9 +61,7 @@ pub(crate) fn add_functionality_to_module(lua: &Lua,
             table.set::<_, LuaFunction>(functionality.name.as_str(), lua.create_function(func)?)?;
             wasm_nvim.set(wasm_name, table)
         }
-    }
-        
-        ;
+    };
     Ok(())
 }
 
