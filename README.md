@@ -17,6 +17,7 @@ cargo make perf
 ```
 
 Requires `cargo-make` which can be installed by `cargo install cargo-make` .
+
 **NOTE: Current test only runs on Windows 10. That's the machine I have.**
 
 ## READING:
