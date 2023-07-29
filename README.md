@@ -74,7 +74,7 @@ We would need an allocation and deallocation function implementation on every wa
   Get a unique `id` to be used for sharing data between wasm module and outside world.
 
 - ```zig
-  extern "host" get_adr(*u8) u32;
+  extern "host" get_addr(*u8) u32;
   ```
 
   Get the address from the host in terms of the memory of the module
@@ -84,7 +84,7 @@ We would need an allocation and deallocation function implementation on every wa
   ```
 
   Usable for getting location of value that was created from outside world of module. The value pointed here is to be managed by the module, and deallocated.
-  **NOTE: value is cleared from memory of outside world once called, make sure to call `get_value_size`, so as to know the length before calling this function**
+  **NOTE: value is cleared from memory of outside world once called, make sure to call before `get_value_size`, so as to know the length before calling this function**
 
 - ```zig
   extern "host" get_value_size(id: u32) u32;

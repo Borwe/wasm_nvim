@@ -110,6 +110,14 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
         WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "get_addr",
             |addr: u32| addr).unwrap();
 
+        WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "get_value_size",
+            |_: Caller<'_, _>, id: u32| {
+            WASM_STATE.lock().unwrap().borrow()
+                .return_values.get(&id).unwrap().len() as u32
+        }).unwrap();
+
+
+        //nvim api functions
         WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_echo",
             nvim_interface::nvim_echo).unwrap();
 
