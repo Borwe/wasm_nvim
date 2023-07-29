@@ -119,6 +119,11 @@ impl WasmNvimState {
         self.return_values.remove(&id)
     }
 
+    pub(crate) fn set_value(&mut self, id: u32, val: String) -> Result<()> {
+        self.return_values.insert(id, val).unwrap();
+        Ok(())
+    }
+
     pub(crate) fn get_lua(&self) -> Option<*const Lua>{
         match self.lua {
             Some(addr) => Some(addr as *const Lua),

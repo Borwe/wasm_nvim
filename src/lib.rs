@@ -116,9 +116,11 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
         WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_create_augroup",
             nvim_interface::nvim_create_augroup).unwrap();
 
+        WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_create_autocmd",
+            nvim_interface::nvim_create_autocmd).unwrap();
+
         WASM_STATE.lock().unwrap().borrow().wasms.clone()
     };
-
 
     wasms.iter().for_each(|wasm|{
         let lua = unsafe{
