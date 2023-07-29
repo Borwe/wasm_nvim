@@ -7,7 +7,7 @@ Write a library to interface between Lua, and wasm, for enabling communication b
 ## Performance:
 
 There is a poor mans performance test implementation, that imitates [Bram's implementation](https://github.com/vim/vim/blob/master/README_VIM9.md) of just summing a number inside a for loop, more will be done later, but as it appears now, wasm is faster than luajit atleast on my Windows 10 machine as you can see from the results:
-![1690628636000](C:\Users\Brian\AppData\Roaming\Typora\typora-user-images\1690628636000.png)
+![1690628636000](./imgs/1690628636000.png)
 
 Wasm version is atleast 30% faster than luajit/neovim version.
 To run this test simply run the bellow:
