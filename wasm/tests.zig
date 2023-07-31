@@ -46,7 +46,7 @@ export fn functionality() u32 {
     var funcs = ArrayList(Functionality).init(aloc);
     defer funcs.deinit();
     funcs.append(CreateFunctionality("groups", .{ .type = "void" }, .{ .type = "void" })) catch unreachable;
-    funcs.append(CreateFunctionality("print_something", .{ .type = "u32" }, .{ .type = "void" })) catch unreachable;
+    funcs.append(CreateFunctionality("print_something", .{ .type = "u32" }, .{ .type = "bool" })) catch unreachable;
 
     var jsoned = ArrayList(u8).init(aloc);
     std.json.stringify(funcs.items, .{}, jsoned.writer()) catch undefined;
@@ -56,12 +56,14 @@ export fn functionality() u32 {
     return id;
 }
 
-export fn printSomething(id: u32) void {
+export fn printSomething(id: u32) bool {
     const size_in = get_value_size(id);
     const addr_items = get_value_addr(id)[0..size_in];
     var json_vals = ArrayList(u8).init(aloc);
     json_vals.items = addr_items;
     json_vals.capacity = size_in;
+
+    return false;
 }
 
 export fn groups() void {

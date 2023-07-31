@@ -29,3 +29,11 @@ pub fn lua_vim_api<'a>(lua: &'a Lua)-> LuaResult<LuaTable>{
     lua.globals().get::<_, LuaTable>("vim")?
         .get::<_, LuaTable>("api")
 }
+
+pub fn lua_json_encode(lua: &Lua, obj: LuaValue) -> LuaResult<String> {
+    let result = lua.globals().get::<_, LuaTable>("vim")?
+        .get::<_, LuaTable>("fn")?.get::<_, LuaFunction>("json_encode")?
+        .call::<_, LuaString>(obj)?
+                    .to_str()?.to_string();
+    Ok(result)
+}

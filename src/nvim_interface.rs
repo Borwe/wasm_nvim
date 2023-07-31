@@ -78,7 +78,7 @@ impl NvimCreateAutoCmd {
             let mut func_name = self.opts.callback.clone().unwrap()[10..].to_string();
             let func_name = func_name.trim().to_string();
             //meaning we get the function from the wasm file.
-            let func = lua.create_function(move |lua: &Lua, table: LuaTable| {
+            let func = lua.create_function(move |lua: &Lua, table: LuaValue| {
                 //func takes an id that points to the value representation of
                 //parameters to this top function
                 let wasm_func = utils::lua_this(lua)?
@@ -86,9 +86,7 @@ impl NvimCreateAutoCmd {
                     .get::<_, LuaFunction>(func_name.as_str())?;
 
 
-                let json_to_send = lua.globals().get::<_, LuaTable>("vim")?.get::<_, LuaTable>("fn")?
-                    .get::<_, LuaFunction>("json_encode")?.call::<_, LuaString>(table)?
-                    .to_str()?.to_string();
+                let json_to_send = utils::lua_json_encode(lua, table)?;
 
                 //set value
                 let id = WASM_STATE.lock().unwrap().borrow_mut().get_id();
@@ -104,7 +102,6 @@ impl NvimCreateAutoCmd {
         Ok((self.events, opts_table))
     }
 }
-
 
 /// Used by nvim_create_augroup
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -126,6 +123,7 @@ pub(crate) struct Type{
     r#type: String
 }
 
+/// Hold functionanility(functions name, params, and return types) export by modules
 #[derive(Serialize, Deserialize, Clone)]
 pub(crate) struct Functionality{
     name: String,
@@ -138,17 +136,71 @@ pub(crate) fn add_functionality_to_module(lua: &Lua,
     let wasm_name = WasmModule::get_name_from_str(&wasm_file);
     utils::debug(lua, &format!("WASM IS: {}", wasm_name))?;
     let func_name = functionality.name.clone();
+    let params = functionality.params.r#type.clone();
+    let returns = functionality.returns.r#type.clone();
 
-    let func = move |_: &Lua, _: LuaValue|{
+    let func = move |lua: &Lua, obj: LuaValue|{
+        // We can do this to improve speed, since calling
+        // lua functions is single threaded on lua side, no need
+        // of locking everytime
         let state = unsafe {
             &mut *(WASM_STATE.lock().unwrap().get_mut() as *mut WasmNvimState)
         };
-        let instance = &state.wasm_modules.get(&wasm_file).unwrap().instance;
-        let func = instance.get_typed_func::<(),()>(
+
+        let vals = utils::lua_json_encode(lua,obj)?;
+        let mut id = 0;
+        let mut vals_is_null = true;
+        if vals!="null" {
+            vals_is_null = false;
+            id = state.get_id();
+            state.set_value(id, vals).unwrap();
+        }
+
+        //set vals to be used for params and return type
+        //to be consumed by wasm function
+        let mut returned: Vec<Val> = match vals_is_null {
+            true => Vec::new(),
+            false => vec![Val::from(0)]
+        };
+        let param = [Val::from(id as i64)];
+
+        //get function to call
+        let instance = &state.wasm_modules.get_mut(&wasm_file).unwrap().instance;
+        let func = instance.get_func(
             &mut state.store, &func_name)
             .expect(&format!("Function {} not found",&func_name));
-        func.call(&mut state.store, ())
-            .expect(&format!("error in calling {}",&func_name));
+
+        //meaning we don't pass anything to function
+        //then call it without any params
+        if params=="void" {
+            func.call(&mut state.store, &[], &mut returned)
+                .expect(&format!("error in calling {}",&func_name));
+        }else{
+            func.call(&mut state.store, &param, &mut returned)
+                .expect(&format!("error in calling {}",&func_name));
+        }
+
+        let alloc_fn = instance.get_export(&mut state.store, "alloc").unwrap().into_func()
+                .unwrap();
+
+        //Handle if wasm function has a return value to be consumed by lua
+        //side
+        if returns!="void"{
+            let id = returned[0].unwrap_i64();
+            let val = WASM_STATE.lock().unwrap().get_mut().get_value(id as u32).unwrap();
+            alloc_fn.call(&mut state.store, &[Val::from(val.len() as i64)], &mut returned)
+                .unwrap();
+            let pos = returned[0].unwrap_i64();
+            unsafe {
+                let mut  ptr = instance.get_memory(&mut state.store, "memory").unwrap()
+                    .data_ptr(&mut state.store);
+                ptr = ptr.offset(pos as isize);
+                for c in val.chars().into_iter(){
+                    *ptr = c as u8;
+                    ptr = ptr.offset(1);
+                }
+            }
+        }
         Ok(())
     };
 
