@@ -117,6 +117,35 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
         }).unwrap();
 
 
+        WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "get_value_addr",
+            |mut caller: Caller<'_, _>, id: u32| {
+            let size = WASM_STATE.lock().unwrap().borrow()
+                .return_values.get(&id).unwrap().len() as i32;
+
+            let vals: [Val;1] = [Val::from(size)];
+            let mut returns: [Val;1] = [Val::from(0)];
+            let alloc = caller.get_export("alloc").unwrap().into_func().unwrap();
+            alloc.call(caller.as_context_mut(), &vals, &mut returns).unwrap();
+
+            let mut location: u32 = 0;
+
+            unsafe {
+                let mut ptr = caller.get_export("memory").unwrap()
+                    .into_memory().unwrap().data_ptr(caller.as_context())
+                    .offset(returns[0].unwrap_i64() as isize);
+                location = ptr as u32;
+
+                for c in WASM_STATE.lock().unwrap()
+                    .borrow_mut().get_value(id).unwrap().chars().into_iter(){
+                    *ptr = c as u8;
+                    ptr = ptr.offset(1);
+                }
+            }
+
+            return location;
+        }).unwrap();
+
+
         //nvim api functions
         WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_echo",
             nvim_interface::nvim_echo).unwrap();
