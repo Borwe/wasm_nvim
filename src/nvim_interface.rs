@@ -78,26 +78,17 @@ impl NvimCreateAutoCmd {
             let mut func_name = self.opts.callback.clone().unwrap()[10..].to_string();
             let func_name = func_name.trim().to_string();
             //meaning we get the function from the wasm file.
-            let func = lua.create_function(move |lua: &Lua, (id, event, group, matched, buf, file, data):
-                (LuaInteger, LuaString, LuaValue, LuaString, LuaInteger, LuaString,  LuaString)| {
+            let func = lua.create_function(move |lua: &Lua, table: LuaTable| {
                 //func takes an id that points to the value representation of
                 //parameters to this top function
                 let wasm_func = utils::lua_this(lua)?
                     .get::<_, LuaTable>(self.module_from.as_str())?
                     .get::<_, LuaFunction>(func_name.as_str())?;
 
-                let json_to_send = serde_json::to_string(&NvimCreateAutoCmdCallBackArgs{
-                    id,
-                    event: event.to_str().unwrap().to_string(),
-                    group: match group {
-                        LuaValue::Integer(i) => Some(i),
-                        _ => None
-                    },
-                    r#match: matched.to_str().unwrap().to_string(),
-                    buf,
-                    file: file.to_str().unwrap().to_string(),
-                    data: data.to_str().unwrap().to_string()
-                }).unwrap();
+
+                let json_to_send = lua.globals().get::<_, LuaTable>("vim")?.get::<_, LuaTable>("fn")?
+                    .get::<_, LuaFunction>("json_encode")?.call::<_, LuaString>(table)?
+                    .to_str()?.to_string();
 
                 //set value
                 let id = WASM_STATE.lock().unwrap().borrow_mut().get_id();

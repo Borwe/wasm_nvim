@@ -141,7 +141,6 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
                     ptr = ptr.offset(1);
                 }
             }
-
             return location;
         }).unwrap();
 
