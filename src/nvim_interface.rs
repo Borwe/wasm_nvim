@@ -131,7 +131,7 @@ pub(crate) struct Functionality{
     returns: Type
 }
 
-pub(crate) fn add_functionality_to_module(lua: &Lua,
+pub(crate) fn add_functionality_to_module<'a>(lua: &'a Lua,
     functionality: Functionality, wasm_file: String)-> LuaResult<()>{
     let wasm_name = WasmModule::get_name_from_str(&wasm_file);
     utils::debug(lua, &format!("WASM IS: {}", wasm_name))?;
@@ -139,7 +139,7 @@ pub(crate) fn add_functionality_to_module(lua: &Lua,
     let params = functionality.params.r#type.clone();
     let returns = functionality.returns.r#type.clone();
 
-    let func = move |lua: &Lua, obj: LuaValue|{
+    let func = move |lua: &'a Lua, obj: LuaValue| -> LuaResult<LuaTable>{
         // We can do this to improve speed, since calling
         // lua functions is single threaded on lua side, no need
         // of locking everytime
@@ -158,11 +158,8 @@ pub(crate) fn add_functionality_to_module(lua: &Lua,
 
         //set vals to be used for params and return type
         //to be consumed by wasm function
-        let mut returned: Vec<Val> = match vals_is_null {
-            true => Vec::new(),
-            false => vec![Val::from(0)]
-        };
-        let param = [Val::from(id as i64)];
+        let mut returned = [Val::from(0 as i32)];
+        let param = [Val::from(id as i32)];
 
         //get function to call
         let instance = &state.wasm_modules.get_mut(&wasm_file).unwrap().instance;
@@ -172,36 +169,31 @@ pub(crate) fn add_functionality_to_module(lua: &Lua,
 
         //meaning we don't pass anything to function
         //then call it without any params
-        if params=="void" {
-            func.call(&mut state.store, &[], &mut returned)
+        if params=="void" && returns=="void" {
+            func.call(&mut state.store, &[], &mut [])
                 .expect(&format!("error in calling {}",&func_name));
-        }else{
+        }else if params!="void" && returns !="void"{
             func.call(&mut state.store, &param, &mut returned)
                 .expect(&format!("error in calling {}",&func_name));
+        }else if params!="void" && returns=="void"{
+            //only consumes
+            func.call(&mut state.store, &param, &mut[])
+                .expect(&format!("error in calling {}",&func_name));
+        }else if params=="void" && returns !="void"{
+            //only returns
+            func.call(&mut state.store, &[], &mut returned)
+                .expect(&format!("error in calling {}",&func_name));
         }
-
-        let alloc_fn = instance.get_export(&mut state.store, "alloc").unwrap().into_func()
-                .unwrap();
 
         //Handle if wasm function has a return value to be consumed by lua
         //side
         if returns!="void"{
-            let id = returned[0].unwrap_i64();
+            let id = returned[0].unwrap_i32() as u32;
             let val = WASM_STATE.lock().unwrap().get_mut().get_value(id as u32).unwrap();
-            alloc_fn.call(&mut state.store, &[Val::from(val.len() as i64)], &mut returned)
-                .unwrap();
-            let pos = returned[0].unwrap_i64();
-            unsafe {
-                let mut  ptr = instance.get_memory(&mut state.store, "memory").unwrap()
-                    .data_ptr(&mut state.store);
-                ptr = ptr.offset(pos as isize);
-                for c in val.chars().into_iter(){
-                    *ptr = c as u8;
-                    ptr = ptr.offset(1);
-                }
-            }
+            let obj = lua.create_string(val.as_bytes())?;
+            return Ok(utils::lua_json_decode(lua, obj)?)
         }
-        Ok(())
+        Ok(lua.create_table()?)
     };
 
     utils::debug(lua, &format!("FUNC IS: {}", functionality.name))?;

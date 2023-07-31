@@ -34,6 +34,7 @@ fn CreateFunctionality(comptime name: []const u8, comptime params: Type, comptim
 }
 
 export fn alloc(size: u32) u32 {
+    std.io.getStdOut().writer().print("ALLOC SIZE: {d}\n", .{size}) catch undefined;
     var buf = aloc.alloc(u8, size) catch undefined;
     return get_addr(&buf[0]);
 }
@@ -46,7 +47,8 @@ export fn functionality() u32 {
     var funcs = ArrayList(Functionality).init(aloc);
     defer funcs.deinit();
     funcs.append(CreateFunctionality("groups", .{ .type = "void" }, .{ .type = "void" })) catch unreachable;
-    funcs.append(CreateFunctionality("print_something", .{ .type = "u32" }, .{ .type = "bool" })) catch unreachable;
+    funcs.append(CreateFunctionality("consuming", .{ .type = "u32" }, .{ .type = "void" })) catch unreachable;
+    funcs.append(CreateFunctionality("returning", .{ .type = "void" }, .{ .type = "u32" })) catch unreachable;
 
     var jsoned = ArrayList(u8).init(aloc);
     std.json.stringify(funcs.items, .{}, jsoned.writer()) catch undefined;
@@ -56,15 +58,41 @@ export fn functionality() u32 {
     return id;
 }
 
-export fn printSomething(id: u32) bool {
+export fn consuming(id: u32) void {
+    const writer = std.io.getStdOut().writer();
+    writer.print("\n--CONSUMING--\n", .{}) catch unreachable;
     const size_in = get_value_size(id);
-    const addr_items = get_value_addr(id)[0..size_in];
-    var json_vals = ArrayList(u8).init(aloc);
-    json_vals.items = addr_items;
-    json_vals.capacity = size_in;
-
-    return false;
+    const addr_items = get_value_addr(id);
+    writer.print("Starting AREA {s}\n", .{addr_items[0..size_in]}) catch unreachable;
 }
+
+export fn returning() u32 {
+    const writer = std.io.getStdOut().writer();
+    writer.print("\n--RETURNING--\n", .{}) catch unreachable;
+
+    var vals = ArrayList(u8).init(aloc);
+    vals.appendSlice("{\"yoo\":\"YOLO!!\"}") catch unreachable;
+    const id = get_id();
+    set_value(id, get_addr(&vals.items[0]), vals.items.len);
+    return id;
+}
+
+//export fn printSomething(id: u32) u32 {
+//    const size_in = get_value_size(id);
+//    const addr_items = get_value_addr(id)[0..size_in];
+//    var json_vals = ArrayList(u8).init(aloc);
+//    json_vals.items = addr_items;
+//    json_vals.capacity = size_in;
+//
+//    std.io.getStdOut().writer().print("WE GOT: {s}", .{json_vals.items}) catch undefined;
+//
+//    var to_return = ArrayList(u8).init(aloc);
+//    to_return.appendSlice("{woot: \"WOOOT WOOT!!\"}") catch unreachable;
+//
+//    const id_r = get_id();
+//    set_value(id, get_addr(&to_return.items[0]), to_return.items.len);
+//    return id_r;
+//}
 
 export fn groups() void {
     const outWriter = std.io.getStdOut().writer();

@@ -5,4 +5,12 @@ wasm.setup {
   debug = true
 }
 
+wasm.tests.consuming {
+  "HEHEHE"
+}
+
+local val = wasm.tests.returning();
+print("YOLOL!! from wasm: "..val.yoo.."\n")
+
+
 wasm.tests.groups()

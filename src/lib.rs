@@ -94,11 +94,10 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
                 &*state.get_lua().unwrap()
             }, &format!("ID: {id} VAL: {val_to_add} PTR: {loc}")).unwrap();
 
-            let mut returns: Vec<Val> = Vec::new();
             let vals: Vec<Val> = vec![Val::from(loc), Val::from(size as i32)];
             
             let dealloc = caller.get_export("dealloc").unwrap().into_func().unwrap();
-            dealloc.call(&mut state.store, &vals, &mut returns).unwrap();
+            dealloc.call(&mut state.store, &vals, &mut []).unwrap();
 
             state.return_values.insert(id, val_to_add).unwrap();
         }).unwrap();
@@ -123,17 +122,18 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
                 .return_values.get(&id).unwrap().len() as i32;
 
             let vals: [Val;1] = [Val::from(size)];
-            let mut returns: [Val;1] = [Val::from(0)];
+            let mut returns = [Val::from(0)];
             let alloc = caller.get_export("alloc").unwrap().into_func().unwrap();
             alloc.call(caller.as_context_mut(), &vals, &mut returns).unwrap();
 
-            let mut location: u32 = 0;
+            let lua = unsafe {
+                &(*WASM_STATE.lock().unwrap().borrow().get_lua().unwrap())
+            };
 
             unsafe {
                 let mut ptr = caller.get_export("memory").unwrap()
                     .into_memory().unwrap().data_ptr(caller.as_context())
-                    .offset(returns[0].unwrap_i64() as isize);
-                location = ptr as u32;
+                    .offset(returns[0].unwrap_i32() as u32 as isize);
 
                 for c in WASM_STATE.lock().unwrap()
                     .borrow_mut().get_value(id).unwrap().chars().into_iter(){
@@ -141,7 +141,7 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
                     ptr = ptr.offset(1);
                 }
             }
-            return location;
+            return returns[0].unwrap_i32() as u32;
         }).unwrap();
 
 
