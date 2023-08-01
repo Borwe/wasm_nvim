@@ -8,14 +8,12 @@ extern "host" fn get_addr(ptr: *u8) u32;
 extern "host" fn get_value_size(id: u32) u32;
 extern "host" fn get_value_addr(id: u32) [*]u8;
 extern "host" fn nvim_echo(id: u32) void;
-extern "host" fn nvim_create_augroup(id: u32) i64;
+extern "host" fn nvim_create_augroup(id: u32) u32;
 extern "host" fn nvim_list_bufs() u32;
 
 var aloc: std.mem.Allocator = std.heap.page_allocator;
 
 const Variant = union(enum) { I64: i64, String: *[]u8 };
-
-const NvimCreateGroup = struct { name: []const u8, clear: bool };
 
 const NvimCreateAutoCmdOpts = struct { group: Variant, pattern: ArrayList(ArrayList(u8)), buffer: ?i64, desc: ?[]u8, callback: ?[]u8, command: ?[]u8, once: ?bool, nested: ?bool };
 
@@ -121,12 +119,17 @@ export fn groups() void {
     const outWriter = std.io.getStdOut().writer();
     outWriter.print("--GROUPS TESTS--\n", .{}) catch undefined;
 
-    const group = NvimCreateGroup{ .name = "WasmNvimGrp", .clear = true };
     var jsoned_grp = ArrayList(u8).init(aloc);
-    json.stringify(group, .{}, jsoned_grp.writer()) catch unreachable;
+    jsoned_grp.appendSlice("[\"MyOwnTestGroup\", {\"clear\": false}]") catch unreachable;
     var id = get_id();
     var addr = get_addr(&jsoned_grp.items[0]);
     set_value(id, addr, jsoned_grp.items.len);
-    var grp_id = nvim_create_augroup(id);
-    outWriter.print("\nGRP ID: {d}\n", .{grp_id}) catch unreachable;
+
+    id = nvim_create_augroup(id);
+    //read value returned from calling
+    var returned = ArrayList(u8).init(aloc);
+    defer returned.deinit();
+    returned.capacity = get_value_size(id);
+    returned.items = get_value_addr(id)[0..returned.capacity];
+    outWriter.print("\nGRP ID: {s}\n", .{returned.items}) catch unreachable;
 }
