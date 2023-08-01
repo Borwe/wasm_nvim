@@ -19,17 +19,13 @@ const NvimCreateAutoCmdOpts = struct { group: Variant, pattern: ArrayList(ArrayL
 
 const NvimCreateAutoCmd = struct { module_from: []u8, events: ArrayList(ArrayList(u8)), opts: NvimCreateAutoCmdOpts };
 
-const Type = struct {
-    type: []const u8,
-};
-
 const Functionality = struct {
     name: []const u8, //hold name of function
-    params: Type, //hold params types, by order
-    returns: Type,
+    params: []const u8, //hold params types, by order
+    returns: []const u8,
 };
 
-fn CreateFunctionality(comptime name: []const u8, comptime params: Type, comptime returns: Type) Functionality {
+fn CreateFunctionality(comptime name: []const u8, comptime params: []const u8, comptime returns: []const u8) Functionality {
     return .{ .name = name, .params = params, .returns = returns };
 }
 
@@ -46,11 +42,11 @@ export fn dealloc(arr: [*]u8, size: u32) void {
 export fn functionality() u32 {
     var funcs = ArrayList(Functionality).init(aloc);
     defer funcs.deinit();
-    funcs.append(CreateFunctionality("groups", .{ .type = "void" }, .{ .type = "void" })) catch unreachable;
-    funcs.append(CreateFunctionality("consuming", .{ .type = "u32" }, .{ .type = "void" })) catch unreachable;
-    funcs.append(CreateFunctionality("returning", .{ .type = "void" }, .{ .type = "u32" })) catch unreachable;
-    funcs.append(CreateFunctionality("nvimEcho", .{ .type = "u32" }, .{ .type = "void" })) catch unreachable;
-    funcs.append(CreateFunctionality("nvimListBufs", .{ .type = "void" }, .{ .type = "void" })) catch unreachable;
+    funcs.append(CreateFunctionality("groups", "void", "void")) catch unreachable;
+    funcs.append(CreateFunctionality("consuming", "u32", "void")) catch unreachable;
+    funcs.append(CreateFunctionality("returning", "void", "u32")) catch unreachable;
+    funcs.append(CreateFunctionality("nvimEcho", "u32", "void")) catch unreachable;
+    funcs.append(CreateFunctionality("nvimListBufs", "void", "void")) catch unreachable;
 
     var jsoned = ArrayList(u8).init(aloc);
     std.json.stringify(funcs.items, .{}, jsoned.writer()) catch undefined;

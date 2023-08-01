@@ -103,10 +103,7 @@ impl NvimCreateAutoCmd {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-pub(crate) struct Type{
-    r#type: String
-}
+type Type =  String;
 
 /// Hold functionanility(functions name, params, and return types) export by modules
 #[derive(Serialize, Deserialize, Clone)]
@@ -121,8 +118,8 @@ pub(crate) fn add_functionality_to_module<'a>(lua: &'a Lua,
     let wasm_name = WasmModule::get_name_from_str(&wasm_file);
     utils::debug(lua, &format!("WASM IS: {}", wasm_name))?;
     let func_name = functionality.name.clone();
-    let params = functionality.params.r#type.clone();
-    let returns = functionality.returns.r#type.clone();
+    let params = functionality.params.clone();
+    let returns = functionality.returns.clone();
 
     let func = move |lua: &'a Lua, obj: LuaValue| -> LuaResult<LuaValue>{
         // We can do this to improve speed, since calling

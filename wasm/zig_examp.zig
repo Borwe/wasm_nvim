@@ -47,17 +47,13 @@ const Echo = struct {
     }
 };
 
-const Type = struct {
-    type: []const u8,
-};
-
 const Functionality = struct {
     name: []const u8, //hold name of function
     params: Type, //hold params types, by order
     returns: Type,
 };
 
-fn CreateFunctionality(comptime name: []const u8, comptime params: Type, comptime returns: Type) Functionality {
+fn CreateFunctionality(comptime name: []const u8, comptime params: []const u8, comptime returns: []const u8) Functionality {
     return .{ .name = name, .params = params, .returns = returns };
 }
 
@@ -72,7 +68,7 @@ export fn dealloc(arr: [*]u8, size: u32) void {
 
 export fn functionality() u32 {
     var functions = ArrayList(Functionality).init(aloc);
-    _ = functions.append(CreateFunctionality("hi", Type{ .type = "void" }, Type{ .type = "void" })) catch undefined;
+    _ = functions.append(CreateFunctionality("hi", "void", "void" )) catch undefined;
     var stringified = ArrayList(u8).init(aloc);
     json.stringify(functions.items, .{}, stringified.writer()) catch undefined;
     var unmanaged = stringified.moveToUnmanaged();

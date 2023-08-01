@@ -2,7 +2,7 @@
 
 ## Aim:
 
-Write a library to interface between Lua, and wasm, for enabling communication between plugins and the Neovim apis. The library language is Rust, as it is to be dynamically loaded via lua, using the neovim, instead of going via the rpc route which creates a networking bottleneck between two or more different process, this route allows for a single process **(NEOVIM)** , while also a plugin ecosystem that allows any programming language that can compile to wasm.
+Write a library to interface between Lua, and wasm, for enabling communication between plugins and the Neovim apis. The library language is Rust, as it is to be dynamically loaded via lua, using the neovim api, instead of going via the rpc route which creates a networking bottleneck between two or more different process, this route allows for a single process **(NEOVIM)** , while also a plugin ecosystem that allows any programming language that can compile to wasm.
 
 ## Performance:
 
@@ -97,7 +97,7 @@ We would need an allocation and deallocation function implementation on every wa
   s
 
 - ```zig
-  extern "host" set_value(id: u32, loc: *u8, size: u32) void;
+  extern "host" set_value(id: u32, loc: u32, size: u32) void;
   ```
 
   Used for returning/setting a value to the `wasm_nvim` library or to the outside world from the wasm module using it. Users of this method should make sure the relinquish memory control of any thing the pointer is pointing to.

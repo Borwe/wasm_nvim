@@ -9,17 +9,13 @@ extern "host" fn nvim_create_augroup(id: u32) i64;
 
 var aloc: std.mem.Allocator = std.heap.page_allocator;
 
-const Type = struct {
-    type: []const u8,
-};
-
 const Functionality = struct {
     name: []const u8, //hold name of function
-    params: Type, //hold params types, by order
-    returns: Type,
+    params: []const u8, //hold params types, by order
+    returns: []const u8,
 };
 
-fn CreateFunctionality(comptime name: []const u8, comptime params: Type, comptime returns: Type) Functionality {
+fn CreateFunctionality(comptime name: []const u8, comptime params: []const u8, comptime returns: []const u8) Functionality {
     return .{ .name = name, .params = params, .returns = returns };
 }
 
@@ -35,7 +31,7 @@ export fn dealloc(arr: [*]u8, size: u32) void {
 export fn functionality() u32 {
     var funcs = ArrayList(Functionality).init(aloc);
     defer funcs.deinit();
-    funcs.append(CreateFunctionality("for_loop", .{ .type = "void" }, .{ .type = "void" })) catch unreachable;
+    funcs.append(CreateFunctionality("for_loop", "void", "void")) catch unreachable;
 
     var jsoned = ArrayList(u8).init(aloc);
     std.json.stringify(funcs.items, .{}, jsoned.writer()) catch undefined;
