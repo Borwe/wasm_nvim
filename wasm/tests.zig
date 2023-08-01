@@ -9,6 +9,7 @@ extern "host" fn get_value_size(id: u32) u32;
 extern "host" fn get_value_addr(id: u32) [*]u8;
 extern "host" fn nvim_echo(id: u32) void;
 extern "host" fn nvim_create_augroup(id: u32) i64;
+extern "host" fn nvim_list_bufs() u32;
 
 var aloc: std.mem.Allocator = std.heap.page_allocator;
 
@@ -51,6 +52,7 @@ export fn functionality() u32 {
     funcs.append(CreateFunctionality("consuming", .{ .type = "u32" }, .{ .type = "void" })) catch unreachable;
     funcs.append(CreateFunctionality("returning", .{ .type = "void" }, .{ .type = "u32" })) catch unreachable;
     funcs.append(CreateFunctionality("nvimEcho", .{ .type = "u32" }, .{ .type = "void" })) catch unreachable;
+    funcs.append(CreateFunctionality("nvimListBufs", .{ .type = "void" }, .{ .type = "void" })) catch unreachable;
 
     var jsoned = ArrayList(u8).init(aloc);
     std.json.stringify(funcs.items, .{}, jsoned.writer()) catch undefined;
@@ -58,6 +60,19 @@ export fn functionality() u32 {
     const addr = get_addr(&jsoned.items[0]);
     set_value(id, addr, jsoned.items.len);
     return id;
+}
+
+export fn nvimListBufs() void {
+    std.io.getStdOut().writer().print("--NVIM_LIST_BUFS_TEST--", .{}) catch unreachable;
+    const id = nvim_list_bufs();
+    const size = get_value_size(id);
+    var buf_list = get_value_addr(id)[0..size];
+    var mng = ArrayList(u8).init(aloc);
+    defer mng.deinit();
+    mng.items = buf_list;
+    mng.capacity = size;
+
+    std.io.getStdOut().writer().print("BUF LIST: {s} \n", .{mng.items}) catch unreachable;
 }
 
 export fn nvimEcho(id: u32) void {
@@ -113,5 +128,5 @@ export fn groups() void {
     var addr = get_addr(&jsoned_grp.items[0]);
     set_value(id, addr, jsoned_grp.items.len);
     var grp_id = nvim_create_augroup(id);
-    outWriter.print("GRP ID: {d}\n", .{grp_id}) catch unreachable;
+    outWriter.print("\nGRP ID: {d}\n", .{grp_id}) catch unreachable;
 }

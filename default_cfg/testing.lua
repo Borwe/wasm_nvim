@@ -2,7 +2,7 @@ local wasm = require("wasm_nvim")
 
 wasm.setup {
   dir = vim.fn.getcwd().."/wasm/",
-  debug = true
+  --debug = true
 }
 
 wasm.tests.consuming {
@@ -17,6 +17,8 @@ wasm.tests.nvimEcho {
   true,
   {verbose = true}
 }
+
+wasm.tests.nvimListBufs()
 
 
 wasm.tests.groups()
