@@ -53,9 +53,6 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
 
     for func in functions {
         let name = func.get("name").unwrap().as_str().unwrap().to_string();
-        if name == "nvim_create_autocmd"{
-            continue;
-        }
         let params = func.get("parameters").unwrap().as_array().unwrap().len();
         let returns = func.get("return_type").unwrap().as_str().unwrap() != "void";
         if params > 0 && returns == false {
@@ -119,7 +116,7 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
                 let lua = unsafe{ &*WASM_STATE.lock().unwrap().borrow().get_lua().unwrap()};
                 let id = &WASM_STATE.lock().unwrap().get_mut().get_id();
 
-                let mut result = utils::lua_vim_api(lua).unwrap()
+                let result = utils::lua_vim_api(lua).unwrap()
                     .get::<_,LuaFunction>(name_c.as_str()).unwrap()
                     .call::<(),LuaValue>(()).unwrap();
 
@@ -130,7 +127,7 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
         }
     }
     //implement custom functions, that have extra params required than normal
-    WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_create_autocmd",
+    WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_create_autocmd_wasm",
         nvim_interface::nvim_create_autocmd).unwrap();
 
     Ok(())
@@ -197,10 +194,6 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
             let alloc = caller.get_export("alloc").unwrap().into_func().unwrap();
             alloc.call(caller.as_context_mut(), &vals, &mut returns).unwrap();
 
-            let lua = unsafe {
-                &(*WASM_STATE.lock().unwrap().borrow().get_lua().unwrap())
-            };
-
             unsafe {
                 let mut ptr = caller.get_export("memory").unwrap()
                     .into_memory().unwrap().data_ptr(caller.as_context())
@@ -238,7 +231,7 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
 
             //add module to list
             state.wasm_modules.insert(wasm.clone(),
-                WasmModule::new(module, instance, wasm).unwrap());
+                WasmModule::new(module, instance).unwrap());
             let wasm_module = state.wasm_modules.get(wasm).unwrap();
             let module = &wasm_module.module;
             let instance = &wasm_module.instance;

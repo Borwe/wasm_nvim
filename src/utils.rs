@@ -1,5 +1,4 @@
 use mlua::prelude::*;
-use anyhow::Result;
 use crate::wasm_state::WASM_STATE;
 
 pub fn generate_error<Return>(error: &str)-> LuaResult<Return> {

@@ -71,11 +71,11 @@ impl NvimCreateAutoCmd {
     /// Generate parameters to be passed to to the lua function
     pub(crate) fn get_param(self, lua: &Lua) -> LuaResult<(Vec<String>, LuaTable)>{
         //get callback
-        let callback = if !self.is_wasm_callback() {
+        let _callback = if !self.is_wasm_callback() {
             //meaning the callback is a string to a vimscript function
             VariantNvimType::T2(self.opts.callback.as_ref().unwrap())
         }else{
-            let mut func_name = self.opts.callback.clone().unwrap()[10..].to_string();
+            let func_name = self.opts.callback.clone().unwrap()[10..].to_string();
             let func_name = func_name.trim().to_string();
             //meaning we get the function from the wasm file.
             let func = lua.create_function(move |lua: &Lua, table: LuaValue| {
@@ -97,6 +97,8 @@ impl NvimCreateAutoCmd {
             })?;
             VariantNvimType::T1(func)
         };
+
+        //TODO Finish implementation
 
         let opts_table = lua.create_table()?;
         Ok((self.events, opts_table))
@@ -131,9 +133,7 @@ pub(crate) fn add_functionality_to_module<'a>(lua: &'a Lua,
 
         let vals = utils::lua_json_encode(lua,obj)?;
         let mut id = 0;
-        let mut vals_is_null = true;
         if vals!="null" {
-            vals_is_null = false;
             id = state.get_id();
             state.set_value(id, vals).unwrap();
         }

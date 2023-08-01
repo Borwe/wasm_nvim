@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use std::{cell::RefCell, collections::HashSet};
+use std::cell::RefCell;
 use anyhow::Result;
 use std::sync::Mutex;
 use wasmtime::*;
@@ -11,38 +11,18 @@ lazy_static! {
     pub(crate) static ref WASM_STATE: Mutex<RefCell<WasmNvimState>> = Mutex::new(RefCell::new(WasmNvimState::new()));
 }
 
-pub(crate) enum Types {
-    /// hold when reading values from a buffer to a string
-    String, 
-}
-
-#[derive(Debug)]
-pub(crate) enum ValueFromWasm {
-    String(String),
-    Nonthing
-}
-
 pub(crate) struct WasmModule{
     pub(crate) module: Module,
     pub(crate) instance: Instance,
-    pub(crate) location: String
 }
 
 impl WasmModule{
-    pub(crate) fn new(module: Module, instance: Instance, wasm: &str) -> Result<Self>{
+    pub(crate) fn new(module: Module, instance: Instance) -> Result<Self>{
         Ok(WasmModule{
             module,
             instance,
-            location: wasm.to_string()
         })
     }
-
-    pub(crate) fn get_name(&self) -> String{
-        std::path::PathBuf::from(&self.location).as_path()
-            .file_stem().unwrap().to_string_lossy()
-            .to_string()
-    }
-
 
     pub(crate) fn get_name_from_str(path: &str) -> String{
         std::path::PathBuf::from(path).as_path()
