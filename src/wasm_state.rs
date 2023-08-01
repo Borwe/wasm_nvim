@@ -60,7 +60,6 @@ pub(crate) struct WasmNvimState{
     pub(crate) linker: Linker<WasiCtx>,
     pub(crate) store: Store<WasiCtx>,
     pub(crate) wasm_modules: HashMap<String, WasmModule>,
-    pub(crate) nvim_types: HashSet<String>,
     lua: Option<usize>,
     /// The set values
     pub(crate) return_values: HashMap<u32, String>,
@@ -84,7 +83,6 @@ impl WasmNvimState {
 
         WasmNvimState{
             wasms: Vec::new(),
-            nvim_types: HashSet::new(),
             dir: None,
             debug: false,
             wasm_engine,
