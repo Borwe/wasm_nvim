@@ -56,6 +56,7 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
         let params = func.get("parameters").unwrap().as_array().unwrap().len();
         let returns = func.get("return_type").unwrap().as_str().unwrap() != "void";
         if params > 0 && returns == false {
+            //testable by testing nvim_echo
             let name_c = name.clone();
             WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", &name,
                     move |id: u32|{
@@ -78,6 +79,21 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
                 }
 
                 func.call::<(),()>(()).unwrap();
+            }).unwrap();
+        }else if params == 0 && returns == true {
+            //testable by testing nvim_list_bufs
+            let name_c = name.clone();
+            WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", &name, move || -> u32{
+                let lua = unsafe{ &*WASM_STATE.lock().unwrap().borrow().get_lua().unwrap()};
+                let id = &WASM_STATE.lock().unwrap().get_mut().get_id();
+
+                let mut result = utils::lua_vim_api(lua).unwrap()
+                    .get::<_,LuaFunction>(name_c.as_str()).unwrap()
+                    .call::<(),LuaValue>(()).unwrap();
+
+                let string_result = utils::lua_json_encode(lua, result).unwrap();
+                &WASM_STATE.lock().unwrap().get_mut().set_value(*id,string_result).unwrap();
+                return *id
             }).unwrap();
         }
     }
