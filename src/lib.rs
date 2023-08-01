@@ -129,10 +129,7 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
             }).unwrap();
         }
     }
-
-    //WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_create_augroup",
-    //    nvim_interface::nvim_create_augroup).unwrap();
-
+    //implement custom functions, that have extra params required than normal
     WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_create_autocmd",
         nvim_interface::nvim_create_autocmd).unwrap();
 

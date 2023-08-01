@@ -103,13 +103,6 @@ impl NvimCreateAutoCmd {
     }
 }
 
-/// Used by nvim_create_augroup
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct NvimCreateAugroup{
-    name: String,
-    clear: bool
-}
-
 #[derive(Serialize, Deserialize, Clone)]
 pub(crate) struct Type{
     r#type: String
@@ -214,22 +207,6 @@ struct InterOpLocation {
 struct InterOpValue {
     info: String,
     loc: InterOpLocation,
-}
-
-pub(crate) fn nvim_create_augroup(id: u32)-> i64{
-    let lua = unsafe{ &*WASM_STATE.lock().unwrap().borrow().get_lua().unwrap()} ;
-    let json = WASM_STATE.lock().unwrap().get_mut()
-        .get_value(id).unwrap();
-
-    let nvim_create_augroup: NvimCreateAugroup = serde_json::from_str(&json).unwrap();
-    let nvim_create_augroup_fn = utils::lua_vim_api(lua)
-        .unwrap().get::<_, LuaFunction>("nvim_create_augroup").unwrap();
-
-    let name: LuaString = lua.create_string(nvim_create_augroup.name.as_str()).unwrap();
-    let opts = lua.create_table().unwrap();
-    opts.set("clear", nvim_create_augroup.clear).unwrap();
-
-    nvim_create_augroup_fn.call::<_, LuaInteger>((name, opts)).unwrap()
 }
 
 pub(crate) fn nvim_create_autocmd(id: u32) -> i64 {
