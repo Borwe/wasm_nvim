@@ -65,7 +65,9 @@ We would need an allocation and deallocation function implementation on every wa
 
 
 
-## Exposed Useful Functions from Wasm_Nvim
+## Exposed Useful Functions from Wasm_Nvim That can be consumed by modules.
+
+### Examples Bellow use zig
 
 - ```zig
   extern "host" get_id() u32;
@@ -80,7 +82,7 @@ We would need an allocation and deallocation function implementation on every wa
   Get the address from the host in terms of the memory of the module
 
 - ```zig
-  extern "host" get_value_addr(id: u32) u32;
+  extern "host" get_value_addr(id: u32) [*]u8;
   ```
 
   Usable for getting location of value that was created from outside world of module. The value pointed here is to be managed by the module, and deallocated.
@@ -92,7 +94,7 @@ We would need an allocation and deallocation function implementation on every wa
 
   Given an id to a value, it returns the size of the value located at given id. This should be called before `get_value_addr` as that would clear the id from memory.
 
-  
+  s
 
 - ```zig
   extern "host" set_value(id: u32, loc: *u8, size: u32) void;
