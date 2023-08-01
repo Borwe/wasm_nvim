@@ -61,7 +61,7 @@ We would need an allocation and deallocation function implementation on every wa
 
   
 
-## [Neovim APIs implemented](./API.md)
+## [Neovim APIs implementation with custom interface for more wasm juice](./API.md)
 
 
 
@@ -101,16 +101,3 @@ We would need an allocation and deallocation function implementation on every wa
   ```
 
   Used for returning/setting a value to the `wasm_nvim` library or to the outside world from the wasm module using it. Users of this method should make sure the relinquish memory control of any thing the pointer is pointing to.
-
-
-## Types representations
-
-| Normal language type in wasm module side(using zig)          | Neovim data types                |
-| ------------------------------------------------------------ | -------------------------------- |
-| ```bool```                                                   | Boolean                          |
-| ```i32```                                                    | Integer, Buffer, Window, TabPage |
-| ```HashMap(ArrayList(u8), ArrayList(u8))``` =>, first value contains field name as the Key. Second value is the Value, contains a string that defines the type; if the type is a function, then it has a name field with the name of the function, and an args field with the types of information of what to expect; if the type is not a function, then it contains a name field, a pointer to where it is located, and it's size. | Dictionary                       |
-| ```[_]u8```                                                  | Object, String                   |
-| ```ArrayList```                                              | Array                            |
-| ```f32```                                                    | Float                            |
-| ```HashMap(ArrayList(u8), ArrayList(u8))``` =>The value parameter is a string representation of a function | LuaRef                           |
