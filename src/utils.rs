@@ -38,8 +38,8 @@ pub fn lua_json_encode(lua: &Lua, obj: LuaValue) -> LuaResult<String> {
     Ok(result)
 }
 
-pub fn lua_json_decode<'a>(lua: &'a Lua, obj: LuaString<'a>) -> LuaResult<LuaTable<'a>> {
+pub fn lua_json_decode<'a>(lua: &'a Lua, obj: LuaString<'a>) -> LuaResult<LuaValue<'a>> {
     lua.globals().get::<_, LuaTable>("vim")?
             .get::<_, LuaTable>("fn")?.get::<_, LuaFunction>("json_decode")?
-            .call::<_, LuaTable>(obj)
+            .call::<_, LuaValue>(obj)
 }

@@ -7,6 +7,7 @@ extern "host" fn set_value(id: u32, loc: u32, size: u32) void;
 extern "host" fn get_addr(ptr: *u8) u32;
 extern "host" fn get_value_size(id: u32) u32;
 extern "host" fn get_value_addr(id: u32) [*]u8;
+extern "host" fn nvim_echo(id: u32) void;
 extern "host" fn nvim_create_augroup(id: u32) i64;
 
 var aloc: std.mem.Allocator = std.heap.page_allocator;
@@ -49,6 +50,7 @@ export fn functionality() u32 {
     funcs.append(CreateFunctionality("groups", .{ .type = "void" }, .{ .type = "void" })) catch unreachable;
     funcs.append(CreateFunctionality("consuming", .{ .type = "u32" }, .{ .type = "void" })) catch unreachable;
     funcs.append(CreateFunctionality("returning", .{ .type = "void" }, .{ .type = "u32" })) catch unreachable;
+    funcs.append(CreateFunctionality("nvimEcho", .{ .type = "u32" }, .{ .type = "void" })) catch unreachable;
 
     var jsoned = ArrayList(u8).init(aloc);
     std.json.stringify(funcs.items, .{}, jsoned.writer()) catch undefined;
@@ -56,6 +58,12 @@ export fn functionality() u32 {
     const addr = get_addr(&jsoned.items[0]);
     set_value(id, addr, jsoned.items.len);
     return id;
+}
+
+export fn nvimEcho(id: u32) void {
+    const writer = std.io.getStdOut().writer();
+    writer.print("\n--NVIM_ECHO--\n", .{}) catch unreachable;
+    nvim_echo(id);
 }
 
 export fn consuming(id: u32) void {

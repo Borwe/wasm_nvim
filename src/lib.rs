@@ -50,6 +50,44 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
     let functions = api_vals.get("functions").unwrap().as_array().unwrap();
     utils::debug(lua, &format!("FUNCS ARE: {}",functions.len()))?;
 
+
+    for func in functions {
+        let name = func.get("name").unwrap().as_str().unwrap().to_string();
+        let params = func.get("parameters").unwrap().as_array().unwrap().len();
+        let returns = func.get("return_type").unwrap().as_str().unwrap() != "void";
+        if params > 0 && returns == false {
+            let name_c = name.clone();
+            WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", &name,
+                    move |id: u32|{
+                let lua = unsafe{ &*WASM_STATE.lock().unwrap().borrow().get_lua().unwrap()};
+                let json = serde_json::to_value(&WASM_STATE.lock().unwrap().get_mut()
+                    .get_value(id).unwrap()).unwrap();
+
+                let mut func = utils::lua_vim_api(lua).unwrap().get::<_,LuaFunction>(name_c.as_str())
+                    .unwrap();
+
+
+                let lua_str = lua.create_string(json.as_str().unwrap()).unwrap();
+                let val_lua = match utils::lua_json_decode(lua, lua_str).unwrap(){
+                    LuaValue::Table(x) => x,
+                    _ => panic!("value passed to {} must be table",name_c)
+                };
+                for i in 1..params+1{
+                    let v: LuaValue = val_lua.get(i).unwrap();
+                    func = func.bind(v).unwrap();
+                }
+
+                func.call::<(),()>(()).unwrap();
+            }).unwrap();
+        }
+    }
+
+    WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_create_augroup",
+        nvim_interface::nvim_create_augroup).unwrap();
+
+    WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_create_autocmd",
+        nvim_interface::nvim_create_autocmd).unwrap();
+
     Ok(())
 }
 
@@ -133,16 +171,6 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
         }).unwrap();
 
 
-        //nvim api functions
-        WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_echo",
-            nvim_interface::nvim_echo).unwrap();
-
-        WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_create_augroup",
-            nvim_interface::nvim_create_augroup).unwrap();
-
-        WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "nvim_create_autocmd",
-            nvim_interface::nvim_create_autocmd).unwrap();
-
         WASM_STATE.lock().unwrap().borrow().wasms.clone()
     };
 
@@ -203,7 +231,7 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
 fn setup(lua: &'static Lua, settings: LuaTable)-> LuaResult<()>{
 
     parse_wasm_dir(lua, &settings)?;
-    setup_nvim_apis(lua)?; //also sets the nvim_types up in WASM_STATE
+    setup_nvim_apis(lua)?;
     setup_wasms_with_lua(lua)?;
 
     Ok(())

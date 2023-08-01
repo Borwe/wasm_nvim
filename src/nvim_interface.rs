@@ -110,14 +110,6 @@ struct NvimCreateAugroup{
     clear: bool
 }
 
-/// Used by nvim_echo
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct NvimEcho{
-    chunk: Vec<Vec<String>>,
-    history: bool,
-    opts: Vec<String>
-}
-
 #[derive(Serialize, Deserialize, Clone)]
 pub(crate) struct Type{
     r#type: String
@@ -139,7 +131,7 @@ pub(crate) fn add_functionality_to_module<'a>(lua: &'a Lua,
     let params = functionality.params.r#type.clone();
     let returns = functionality.returns.r#type.clone();
 
-    let func = move |lua: &'a Lua, obj: LuaValue| -> LuaResult<LuaTable>{
+    let func = move |lua: &'a Lua, obj: LuaValue| -> LuaResult<LuaValue>{
         // We can do this to improve speed, since calling
         // lua functions is single threaded on lua side, no need
         // of locking everytime
@@ -193,7 +185,7 @@ pub(crate) fn add_functionality_to_module<'a>(lua: &'a Lua,
             let obj = lua.create_string(val.as_bytes())?;
             return Ok(utils::lua_json_decode(lua, obj)?)
         }
-        Ok(lua.create_table()?)
+        Ok(LuaValue::Nil)
     };
 
     utils::debug(lua, &format!("FUNC IS: {}", functionality.name))?;
@@ -210,6 +202,8 @@ pub(crate) fn add_functionality_to_module<'a>(lua: &'a Lua,
     }
 }
 
+
+
 #[derive(Serialize, Deserialize)]
 struct InterOpLocation {
     beg: u32,
@@ -220,16 +214,6 @@ struct InterOpLocation {
 struct InterOpValue {
     info: String,
     loc: InterOpLocation,
-}
-
-pub(crate) fn nvim_echo(id: u32){
-    let lua = unsafe{ &*WASM_STATE.lock().unwrap().borrow().get_lua().unwrap()} ;
-    let json = WASM_STATE.lock().unwrap().get_mut()
-        .get_value(id).unwrap();
-    let nvim_echo: NvimEcho = serde_json::from_str(&json).unwrap();
-
-    let echo_fn = utils::lua_vim_api(lua).unwrap().get::<_, LuaFunction>("nvim_echo").unwrap();
-    echo_fn.call::<_, ()>((nvim_echo.chunk, nvim_echo.history, nvim_echo.opts)).unwrap();
 }
 
 pub(crate) fn nvim_create_augroup(id: u32)-> i64{
