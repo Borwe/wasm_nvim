@@ -14,7 +14,7 @@ dependencies = ["move","zig_test"]
 
 [tasks.docker_test]
 command = "/downloads/nvim-linux64/bin/nvim"
-args = ["-u","NONE","-S","./default_cfg/testing.lua"]
+args = ["-u","NONE","-l","./default_cfg/testing.lua"]
 dependencies = ["move","docker_zig_test"]
 
 [tasks.docker_zig_test]
@@ -61,7 +61,7 @@ dependencies = ["build"]
 
 [tasks.move_lin]
 script = '''
-mkdir lua
+mkdir -p lua
 cp ./target/release/libwasm_nvim.so ./wasm_nvim.so'''
 dependencies = ["build"]
 

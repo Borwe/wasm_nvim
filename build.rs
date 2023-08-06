@@ -6,8 +6,10 @@ use zip;
 use std::path::PathBuf;
 use std::process::Command;
 
+#[cfg(windows)]
 const LUAJIT_2_1_0_BETA3_LINK: &'static str = "https://luajit.org/download/LuaJIT-2.1.0-beta3.zip";
 
+#[cfg(windows)]
 const LUAJIT_DIR: &'static str = "LuaJIT-2.1.0-beta3";
 
 #[cfg(windows)]
