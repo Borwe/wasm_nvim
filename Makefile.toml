@@ -2,7 +2,6 @@
 command = "cargo"
 args = ["clean"]
 
-
 [tasks.perf]
 command = "nvim"
 args = ["-u","NONE","-l","./default_cfg/perf.lua"]
@@ -12,6 +11,16 @@ dependencies = ["move","zig_perf"]
 command = "nvim"
 args = ["-u","NONE","-l","./default_cfg/testing.lua"]
 dependencies = ["move","zig_test"]
+
+[tasks.docker_test]
+command = "/downloads/nvim-linux64/bin/nvim"
+args = ["-u","NONE","-S","./default_cfg/testing.lua"]
+dependencies = ["move","docker_zig_test"]
+
+[tasks.docker_zig_test]
+command = "/downloads/zig-linux-x86_64-0.11.0/zig"
+cwd = "./wasm"
+args = ["build-lib","tests.zig","-target","wasm32-wasi", "-dynamic", "-rdynamic"]
 
 [tasks.zig_perf]
 command = "zig"
@@ -35,20 +44,31 @@ dependencies = ["move","zig_wasm"]
 
 [tasks.move]
 windows_alias = "move_win"
+linux_alias = "move_lin"
 
 [tasks.build]
 windows_alias = "build_win"
+linux_alias = "build_lin"
 
 [tasks.docs]
 windows_alias = "docs_win"
 
 [tasks.move_win]
-script-runner = "@shell"
-script = '''copy .\target\release\wasm_nvim.dll .\'''
+script = '''
+mkdir lua
+copy .\target\release\wasm_nvim.dll .\lua\'''
 dependencies = ["build"]
 
+[tasks.move_lin]
+script = '''
+mkdir lua
+cp ./target/release/libwasm_nvim.so ./wasm_nvim.so'''
+dependencies = ["build"]
+
+[tasks.build_lin]
+script = '''cargo build -r'''
+
 [tasks.build_win]
-script-runner = "powershell"
 script = '''
 set LUA_INC=%CD%\target\release\build\LuaJIT-2.1.0-beta3\src
 set LUA_LIB=%CD%\target\release\build\LuaJIT-2.1.0-beta3\src
@@ -57,7 +77,6 @@ cargo build -r
 '''
 
 [tasks.docs_win]
-script-runner = "powershell"
 script = '''
 set LUA_INC=%CD%\target\release\build\LuaJIT-2.1.0-beta3\src
 set LUA_LIB=%CD%\target\release\build\LuaJIT-2.1.0-beta3\src
