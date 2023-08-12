@@ -109,3 +109,5 @@ NOTE: If you come across a neovim api that requires a lua function or callback i
   ```
 
   Used for returning/setting a value to the `wasm_nvim` library or to the outside world from the wasm module using it. Users of this method should make sure the relinquish memory control of any thing the pointer is pointing to.
+
+## [Tutorial](./TUTORIAL.md)

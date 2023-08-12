@@ -17,6 +17,7 @@ fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
         Err(_) => WASM_STATE.lock().unwrap().get_mut().debug = false
     };
 
+    //get wasm modules
     let runtime_paths = utils::lua_vim_api(lua).unwrap()
         .get::<_, LuaFunction>("nvim_list_runtime_paths")
         .unwrap().call::<_, LuaValue>(()).unwrap();
@@ -34,11 +35,11 @@ fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
         std::fs::read_dir(&p).unwrap().into_iter().for_each(|p|{
             let p = p.unwrap();
             if p.path().extension().unwrap() == "wasm" {
-                WASM_STATE.lock().unwrap().get_mut().wasms.push(p.path().to_str().unwrap().to_string())
+                WASM_STATE.lock().unwrap().get_mut().wasms
+                    .push(p.path().to_str().unwrap().to_string())
             }
         });
     });
-
 
     Ok(())
 }
@@ -54,7 +55,6 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
 
     let functions = api_vals.get("functions").unwrap().as_array().unwrap();
     utils::debug(lua, &format!("FUNCS ARE: {}",functions.len()))?;
-
 
     for func in functions {
         let name = func.get("name").unwrap().as_str().unwrap().to_string();
