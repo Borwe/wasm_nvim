@@ -11,6 +11,8 @@ wasm.tests.consuming {
   "HEHEHE"
 }
 
+wasm.tests.consuming("yolo","golo")
+
 local val = wasm.tests.returning();
 print("YOLOL!! from wasm: "..val.yoo.."\n")
 

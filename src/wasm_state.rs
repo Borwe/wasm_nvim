@@ -24,6 +24,7 @@ impl WasmModule{
         })
     }
 
+    /// Get name of module file: eg. test.wasm will have name 'test'
     pub(crate) fn get_name_from_str(path: &str) -> String{
         std::path::PathBuf::from(path).as_path()
             .file_stem().unwrap().to_string_lossy()

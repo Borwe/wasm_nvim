@@ -192,20 +192,6 @@ pub(crate) fn add_functionality_to_module<'a>(lua: &'a Lua,
     }
 }
 
-
-
-#[derive(Serialize, Deserialize)]
-struct InterOpLocation {
-    beg: u32,
-    size: u32
-}
-
-#[derive(Serialize, Deserialize)]
-struct InterOpValue {
-    info: String,
-    loc: InterOpLocation,
-}
-
 pub(crate) fn nvim_create_autocmd(id: u32) -> i64 {
     let lua = unsafe{ &*WASM_STATE.lock().unwrap().borrow().get_lua().unwrap()} ;
     let aucmd_json: NvimCreateAutoCmd = serde_json::from_str(&WASM_STATE.lock().unwrap().get_mut()
