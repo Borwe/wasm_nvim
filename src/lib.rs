@@ -1,6 +1,6 @@
 use mlua::prelude::*;
 use wasmtime::*;
-use std::str::FromStr;
+use std::{str::FromStr, path::PathBuf};
 
 mod nvim_interface;
 mod utils;
@@ -9,31 +9,36 @@ mod wasm_state;
 use wasm_state::{WASM_STATE, WasmNvimState, WasmModule};
 use nvim_interface::{Functionality, add_functionality_to_module};
 
-fn parse_wasm_dir(_: &Lua, settings: &LuaTable)-> LuaResult<()>{
+fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
     
+    //setup debug option
     match settings.get::<_, bool>("debug") {
         Ok(x) => WASM_STATE.lock().unwrap().get_mut().debug = x,
         Err(_) => WASM_STATE.lock().unwrap().get_mut().debug = false
     };
 
-    if let Ok(d) =  settings.get::<_, LuaString>("dir") {
-        WASM_STATE.lock().unwrap().get_mut().dir = Some(d.to_str()?.into());
-    }else{
-        return utils::generate_error("No dir path given in settings on setup call");
-    }
+    let runtime_paths = utils::lua_vim_api(lua).unwrap()
+        .get::<_, LuaFunction>("nvim_list_runtime_paths")
+        .unwrap().call::<_, LuaValue>(()).unwrap();
 
-    let path = std::path::PathBuf::from_str(WASM_STATE.lock().unwrap().borrow().dir.as_ref().unwrap()).unwrap();
+    let runtime_paths_jsoned: serde_json::Value = serde_json::from_str(
+        utils::lua_json_encode(lua, runtime_paths).unwrap()
+        .as_str()).unwrap();
 
-    if !path.exists() || !path.is_dir() {
-        return utils::generate_error("Path passed as dir option not a real directory or doesn't exist");
-    }
-
-    std::fs::read_dir(&path)?.into_iter().for_each(|p|{
-        let p = p.unwrap();
-        if p.path().extension().unwrap() == "wasm" {
-            WASM_STATE.lock().unwrap().get_mut().wasms.push(p.path().to_str().unwrap().to_string())
+    runtime_paths_jsoned.as_array().into_iter().flat_map(|v| v.into_iter() )
+        .map(|v| PathBuf::from(v.as_str().unwrap()) ).for_each(|mut p|{
+        p.push("wasm");
+        if !p.exists() {
+            return;
         }
+        std::fs::read_dir(&p).unwrap().into_iter().for_each(|p|{
+            let p = p.unwrap();
+            if p.path().extension().unwrap() == "wasm" {
+                WASM_STATE.lock().unwrap().get_mut().wasms.push(p.path().to_str().unwrap().to_string())
+            }
+        });
     });
+
 
     Ok(())
 }

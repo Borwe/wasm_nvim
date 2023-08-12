@@ -3,15 +3,12 @@ vim.opt.runtimepath:append(vim.fn.getcwd())
 local wasm = require("wasm_nvim")
 
 wasm.setup {
-  dir = vim.fn.getcwd().."/wasm/",
   debug = true
 }
 
 wasm.tests.consuming {
   "HEHEHE"
 }
-
-wasm.tests.consuming("yolo","golo")
 
 local val = wasm.tests.returning();
 print("YOLOL!! from wasm: "..val.yoo.."\n")

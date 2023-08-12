@@ -1,10 +1,6 @@
 use mlua::prelude::*;
 use crate::wasm_state::WASM_STATE;
 
-pub fn generate_error<Return>(error: &str)-> LuaResult<Return> {
-    return Err(mlua::Error::RuntimeError(error.into()));
-}
-
 pub fn debug(lua: &Lua, data: &str) ->  LuaResult<()>{
     if WASM_STATE.lock().unwrap().borrow().debug == true {
         lua.globals().get::<_, LuaFunction>("print")?

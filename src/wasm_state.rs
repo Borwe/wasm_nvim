@@ -35,7 +35,6 @@ impl WasmModule{
 
 pub(crate) struct WasmNvimState{
     pub(crate) wasms: Vec<String>,
-    pub(crate) dir: Option<String>,
     pub(crate) debug: bool,
     pub(crate) wasm_engine: Engine,
     pub(crate) linker: Linker<WasiCtx>,
@@ -64,7 +63,6 @@ impl WasmNvimState {
 
         WasmNvimState{
             wasms: Vec::new(),
-            dir: None,
             debug: false,
             wasm_engine,
             linker,
