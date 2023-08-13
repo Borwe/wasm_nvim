@@ -110,4 +110,18 @@ NOTE: If you come across a neovim api that requires a lua function or callback i
 
   Used for returning/setting a value to the `wasm_nvim` library or to the outside world from the wasm module using it. Users of this method should make sure the relinquish memory control of any thing the pointer is pointing to.
 
+- ```zig
+  extern "host" lua_exec(id: u32) void;
+  ```
+
+  Executes lua script which is string, created, and passed to host via `get_id`  and`set_value` combination, the id of the string is then passed to this function which it will then be executed.
+
+- ```zig
+  extern "host"lua_eval(id: u32) u32;
+  ```
+
+  Similar to `lua_exec` except that this one evaluates expressions and will return a value that is mapped to the id. The value returned will say null, if the expression evaluated returned nothing, otherwise the value would contain the contents of the results
+
+  **NOTE**: This is for expressions, anything else passed to this function can result to undefined behavior
+
 ## [Tutorial](./TUTORIAL.md)
