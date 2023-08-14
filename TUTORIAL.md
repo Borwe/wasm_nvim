@@ -30,4 +30,56 @@
   extern "host" nvim_echo(id: u32) void;
   ```
 
+  In Rust.
+
+  ```rust
+  #[link(wasm_import_module = "host")]
+  extern "C" {
+      fn nvim_echo(id: u32);
+  }
+  ```
+
+  
+
 - Passing data to and out of a module function requires storing the data in an unique id to be consumed by the outside world, or to be consumed from inside the function given the id.
+
+
+
+## Calling WASM function from Lua
+
+- First need to make sure the wasm module you are trying to access is on a `wasm` folder inside a runtimepath.
+
+- Also make sure the .dll or .so wasm_nvim.dll is in a `lua` folder on one of your vim runtime paths.
+
+  ```lua
+  local wasm = require("wasm_nvim")
+  -- NOTE: this following line should best be done once, best put inside your init.lua
+  wasm.setup {
+    debug = true --[[ to show debug info, can be left blank or set to false 
+      to not see debug info from wasm_nvim]]
+  }
+  
+  -- once done with setup now you can call functions being exported from wasm modules.
+  
+  --[[
+  module_name is the file name of the .wasm file, eg: test.wasm means the module being used is the test module.
+  do_something is the function
+  ]]
+  wasm.module_name.do_something()
+  
+  --[[
+  Here we are calling the consume function exported from module_name wasm module.
+  Note as stated, wasm functions can only accept a single dictionary or array as param, passing files to
+  ]]
+  wasm.module_name.consume {
+      "param1", "param2", "param3"
+  }
+  
+  --[[
+  Wasm functions can also return values to lua space
+  ]]
+  local something = wasm.module_name.return_something()
+  
+  ```
+
+  

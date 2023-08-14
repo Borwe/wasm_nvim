@@ -1,4 +1,4 @@
-# <u>:fire:WASM_NVIM:fire:</u>
+# <u>:fire:WASM_NVIM:zap:</u>
 
 ## Aim:
 
@@ -9,14 +9,17 @@ Write a library to interface between Lua, and wasm, for enabling communication b
 There is a poor mans performance test implementation, that imitates [Bram's implementation](https://github.com/vim/vim/blob/master/README_VIM9.md) of just summing a number inside a for loop, more will be done later, but as it appears now, wasm is faster than luajit atleast on my Windows 10 machine as you can see from the results:
 ![1690628636000](./imgs/1690628636000.png)
 
-Wasm version is atleast 30% faster than luajit/neovim version.
+Wasm version is atleast 30% faster than luajit/neovim version, if you compile for full optimisation for example in rust, you can get even 90% boost as seen in the image.
 To run this test simply run the bellow:
 
 ```sh
 cargo make perf
 ```
 
-Requires `cargo-make` which can be installed by `cargo install cargo-make` .
+Requires:
+
+- `cargo-make` which can be installed by `cargo install cargo-make` .
+- `zig` to be in system path, can be installed from [Download ⚡ Zig Programming Language (ziglang.org)](https://ziglang.org/download/)
 
 **NOTE: Current test only runs on Windows 10. That's the machine I have.**
 
