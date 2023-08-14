@@ -4,12 +4,13 @@ const json = std.json;
 
 extern "host" fn get_id() u32;
 extern "host" fn set_value(id: u32, loc: u32, size: u32) void;
-extern "host" fn get_addr(ptr: *u8) u32;
+extern "host" fn get_addr(ptr: *const u8) u32;
 extern "host" fn get_value_size(id: u32) u32;
 extern "host" fn get_value_addr(id: u32) [*]u8;
 extern "host" fn nvim_echo(id: u32) void;
 extern "host" fn nvim_create_augroup(id: u32) u32;
 extern "host" fn nvim_list_bufs() u32;
+extern "host" fn lua_exec(id: u32) void;
 
 var aloc: std.mem.Allocator = std.heap.page_allocator;
 
@@ -47,6 +48,7 @@ export fn functionality() u32 {
     funcs.append(CreateFunctionality("returning", "void", "u32")) catch unreachable;
     funcs.append(CreateFunctionality("nvimEcho", "u32", "void")) catch unreachable;
     funcs.append(CreateFunctionality("nvimListBufs", "void", "void")) catch unreachable;
+    funcs.append(CreateFunctionality("luaExecExample", "void", "void")) catch unreachable;
 
     var jsoned = ArrayList(u8).init(aloc);
     std.json.stringify(funcs.items, .{}, jsoned.writer()) catch undefined;
@@ -92,6 +94,18 @@ export fn returning() u32 {
     const id = get_id();
     set_value(id, get_addr(&vals.items[0]), vals.items.len);
     return id;
+}
+
+export fn luaExecExample() void {
+    const script =
+        \\local a = 2;
+        \\local b = 2;
+        \\local c = 2+2;
+        \\print("Value of c from lua WASM script is : "..c);
+    ;
+    const id = get_id();
+    set_value(id, get_addr(&script[0]), script.len);
+    lua_exec(id);
 }
 
 //export fn printSomething(id: u32) u32 {

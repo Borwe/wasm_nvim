@@ -6,6 +6,8 @@ wasm.setup {
   debug = true
 }
 
+wasm.tests.luaExecExample();
+
 wasm.tests.consuming {
   "HEHEHE"
 }

@@ -120,7 +120,7 @@ NOTE: If you come across a neovim api that requires a lua function or callback i
   extern "host"lua_eval(id: u32) u32;
   ```
 
-  Similar to `lua_exec` except that this one evaluates expressions and will return a value that is mapped to the id. The value returned will say null, if the expression evaluated returned nothing, otherwise the value would contain the contents of the results
+  Similar to `lua_exec` except that this one evaluates expressions and will return a value that is mapped to the id. The value returned will say `"null"`, if the expression evaluated returned nothing, otherwise the value would contain the contents of the results
 
   **NOTE**: This is for expressions, anything else passed to this function can result to undefined behavior
 
