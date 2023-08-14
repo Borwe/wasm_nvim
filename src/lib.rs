@@ -194,7 +194,6 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
             let result: LuaValue = lua.load(&val).eval().unwrap();
             let result_str = utils::lua_json_encode(lua,result).unwrap();
             let id = WASM_STATE.lock().unwrap().borrow_mut().get_id();
-            println!("NIMEPATA: {result_str} ID: {id}");
             WASM_STATE.lock().unwrap().get_mut().set_value(id, result_str).unwrap();
             return id;
         }).unwrap();
