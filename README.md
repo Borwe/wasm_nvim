@@ -116,6 +116,8 @@ NOTE: If you come across a neovim api that requires a lua function or callback i
 
   Executes lua script which is string, created, and passed to host via `get_id`  and`set_value` combination, the id of the string is then passed to this function which it will then be executed.
 
+  **NOTE**: This prints out the loaded string to output on some neovim versions, eg: 0.9.1 on windows. 
+
 - ```zig
   extern "host"lua_eval(id: u32) u32;
   ```
