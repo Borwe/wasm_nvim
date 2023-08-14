@@ -11,6 +11,7 @@ extern "host" fn nvim_echo(id: u32) void;
 extern "host" fn nvim_create_augroup(id: u32) u32;
 extern "host" fn nvim_list_bufs() u32;
 extern "host" fn lua_exec(id: u32) void;
+extern "host" fn lua_eval(id: u32) u32;
 
 var aloc: std.mem.Allocator = std.heap.page_allocator;
 
@@ -31,7 +32,6 @@ fn CreateFunctionality(comptime name: []const u8, comptime params: []const u8, c
 }
 
 export fn alloc(size: u32) u32 {
-    std.io.getStdOut().writer().print("ALLOC SIZE: {d}\n", .{size}) catch undefined;
     var buf = aloc.alloc(u8, size) catch undefined;
     return get_addr(&buf[0]);
 }
@@ -49,6 +49,7 @@ export fn functionality() u32 {
     funcs.append(CreateFunctionality("nvimEcho", "u32", "void")) catch unreachable;
     funcs.append(CreateFunctionality("nvimListBufs", "void", "void")) catch unreachable;
     funcs.append(CreateFunctionality("luaExecExample", "void", "void")) catch unreachable;
+    funcs.append(CreateFunctionality("luaEvalExample", "void", "void")) catch unreachable;
 
     var jsoned = ArrayList(u8).init(aloc);
     std.json.stringify(funcs.items, .{}, jsoned.writer()) catch undefined;
@@ -97,6 +98,8 @@ export fn returning() u32 {
 }
 
 export fn luaExecExample() void {
+    const writer = std.io.getStdOut().writer();
+    writer.print("\n--Lua Exec Example--\n", .{}) catch unreachable;
     const script =
         \\local a = 2;
         \\local b = 2;
@@ -108,22 +111,35 @@ export fn luaExecExample() void {
     lua_exec(id);
 }
 
-//export fn printSomething(id: u32) u32 {
-//    const size_in = get_value_size(id);
-//    const addr_items = get_value_addr(id)[0..size_in];
-//    var json_vals = ArrayList(u8).init(aloc);
-//    json_vals.items = addr_items;
-//    json_vals.capacity = size_in;
-//
-//    std.io.getStdOut().writer().print("WE GOT: {s}", .{json_vals.items}) catch undefined;
-//
-//    var to_return = ArrayList(u8).init(aloc);
-//    to_return.appendSlice("{woot: \"WOOOT WOOT!!\"}") catch unreachable;
-//
-//    const id_r = get_id();
-//    set_value(id, get_addr(&to_return.items[0]), to_return.items.len);
-//    return id_r;
-//}
+export fn luaEvalExample() void {
+    const writer = std.io.getStdOut().writer();
+    writer.print("\n--Lua Eval Example--\n", .{}) catch unreachable;
+    const script_returns_nil = "require('testing_lua').print_hello_return_nothing()";
+    const script_returns_num = "require('testing_lua').print_hello_return_number()";
+    var id = get_id();
+    set_value(id, get_addr(&script_returns_nil[0]), script_returns_nil.len);
+    const return_first = lua_eval(id);
+
+    id = get_id();
+    set_value(id, get_addr(&script_returns_num[0]), script_returns_num.len);
+    const return_second = lua_eval(id);
+
+    var size_in = get_value_size(return_first);
+    var addr_items = get_value_addr(return_first)[0..size_in];
+    var return_val_1 = ArrayList(u8).init(aloc);
+    defer return_val_1.deinit();
+    return_val_1.items = addr_items;
+    return_val_1.capacity = size_in;
+    writer.print("\n{s} -> Goten the following returned from calling print_hello_return_nothing()", .{return_val_1.items}) catch unreachable;
+
+    size_in = get_value_size(return_second);
+    var addr_items_2 = get_value_addr(return_second)[0..size_in];
+    var return_val_2 = ArrayList(u8).init(aloc);
+    defer return_val_2.deinit();
+    return_val_2.items = addr_items_2;
+    return_val_2.capacity = size_in;
+    writer.print("\n{s} -> Goten the following returned from calling print_hello_return_number()", .{return_val_2.items}) catch unreachable;
+}
 
 export fn groups() void {
     const outWriter = std.io.getStdOut().writer();

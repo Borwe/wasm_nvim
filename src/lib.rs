@@ -185,6 +185,20 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
             lua.load(&val).exec().unwrap();
         }).unwrap();
 
+        WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "lua_eval",
+            |id: u32| {
+            let lua = unsafe {
+                & *WASM_STATE.lock().unwrap().borrow().get_lua().unwrap()
+            };
+            let val = WASM_STATE.lock().unwrap().borrow_mut().get_value(id).unwrap();
+            let result: LuaValue = lua.load(&val).eval().unwrap();
+            let result_str = utils::lua_json_encode(lua,result).unwrap();
+            let id = WASM_STATE.lock().unwrap().borrow_mut().get_id();
+            println!("NIMEPATA: {result_str} ID: {id}");
+            WASM_STATE.lock().unwrap().get_mut().set_value(id, result_str).unwrap();
+            return id;
+        }).unwrap();
+
         WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "get_id",
             || WASM_STATE.lock().unwrap().get_mut().get_id()
         ).unwrap();

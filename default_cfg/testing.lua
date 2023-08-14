@@ -1,12 +1,15 @@
 --setup parent dir as path to search for file
 vim.opt.runtimepath:append(vim.fn.getcwd())
+--add testing_lua_module dir for being able to call lua module/script from wasm test
+vim.opt.runtimepath:append(vim.fn.getcwd().."/testing_lua_module")
 local wasm = require("wasm_nvim")
 
 wasm.setup {
-  debug = true
+  --debug = true
 }
 
 wasm.tests.luaExecExample();
+wasm.tests.luaEvalExample();
 
 wasm.tests.consuming {
   "HEHEHE"
