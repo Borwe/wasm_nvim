@@ -31,10 +31,10 @@ jobs:
       - name: Prepare Env Build And Test
         run: |
           cargo install cargo-make
-          curl "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz" --output nvim-linux64.tar.gz
-          tar -xzf nvim-linux64.tar.gz
-          set PATH=%CD%\nvim-linux64\bin\;%PATH%
-          curl "https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz" --output zig-linux-x86_64-0.11.0.tar.xz
-          tar -xf zig-linux-x86_64-0.11.0.tar.xz
-          set PATH=%CD%\zig-linux-x86_64-0.11.0\;%PATH%
+          curl "https://github.com/neovim/neovim/releases/download/stable/nvim-win64.zip" --output nvim-win64.zip
+          tar -xf nvim-win64.zip
+          set PATH=%CD%\nvim-win64\bin\;%PATH%
+          curl "https://ziglang.org/download/0.11.0/zig-windows-x86_64-0.11.0.zip" --output zig-windows-x86_64-0.11.0.zip
+          tar -xf zig-windows-x86_64-0.11.0.zip
+          set PATH=%CD%\zig-windows-x86_64-0.11.0\;%PATH%
           cargo make test
