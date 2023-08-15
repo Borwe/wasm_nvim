@@ -13,7 +13,7 @@ args = ["-u","NONE","-l","./default_cfg/testing.lua"]
 dependencies = ["move","zig_test"]
 
 [tasks.ci_test]
-command = "./nvim-win64/bin/nvim"
+command = "./nvim-win64/nvim-win64/bin/nvim"
 args = ["-u","NONE","-l","./default_cfg/testing.lua"]
 dependencies = ["move","ci_zig_test"]
 
