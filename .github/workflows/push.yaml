@@ -31,11 +31,12 @@ jobs:
       - name: Prepare Env Build And Test
         shell: pwsh
         run: |
+          $env:CD = Get-Location
           cargo install cargo-make
           Invoke-WebRequest "https://github.com/neovim/neovim/releases/download/stable/nvim-win64.zip" -OutFile .\nvim-win64.zip
           Expand-Archive nvim-win64.zip 
-          $env:PATH=$pwd+'/nvim-win64/bin/;'+$env:PATH
+          $env:PATH=$env:CD+'/nvim-win64/bin/;'+$env:PATH
           Invoke-WebRequest "https://ziglang.org/download/0.11.0/zig-windows-x86_64-0.11.0.zip" -OutFile .\zig-windows-x86_64-0.11.0.zip
           Expand-Archive zig-windows-x86_64-0.11.0.zip
-          $env:PATH=$pwd+'/zig-windows-x86_64-0.11.0/;'+$env:PATH
+          $env:PATH=$env:CD+'/zig-windows-x86_64-0.11.0/;'+$env:PATH
           cargo make test
