@@ -62,7 +62,7 @@ dependencies = ["build"]
 [tasks.move_lin]
 script = '''
 mkdir -p lua
-cp ./target/release/libwasm_nvim.so ./wasm_nvim.so'''
+cp ./target/release/libwasm_nvim.so ./lua/wasm_nvim.so'''
 dependencies = ["build"]
 
 [tasks.build_lin]
