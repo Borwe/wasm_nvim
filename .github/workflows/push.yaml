@@ -32,10 +32,10 @@ jobs:
         shell: pwsh
         run: |
           cargo install cargo-make
-          curl "https://github.com/neovim/neovim/releases/download/stable/nvim-win64.zip" --output nvim-win64.zip
+          Invoke-WebRequest "https://github.com/neovim/neovim/releases/download/stable/nvim-win64.zip" --output nvim-win64.zip
           Expand-Archive nvim-win64.zip 
           $env:PATH=$pwd+'/nvim-win64/bin/;'+$env:PATH
-          curl "https://ziglang.org/download/0.11.0/zig-windows-x86_64-0.11.0.zip" --output zig-windows-x86_64-0.11.0.zip
+          Invoke-WebRequest "https://ziglang.org/download/0.11.0/zig-windows-x86_64-0.11.0.zip" --output zig-windows-x86_64-0.11.0.zip
           Expand-Archive zig-windows-x86_64-0.11.0.zip
           $env:PATH=$pwd+'/zig-windows-x86_64-0.11.0/;'+$env:PATH
           cargo make test
