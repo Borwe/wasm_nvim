@@ -55,10 +55,12 @@ dependencies = ["move","zig_wasm"]
 [tasks.move]
 windows_alias = "move_win"
 linux_alias = "move_lin"
+mac_alias = "move_mac"
 
 [tasks.build]
 windows_alias = "build_win"
 linux_alias = "build_lin"
+mac_alias = "build_lin"
 
 [tasks.docs]
 windows_alias = "docs_win"
@@ -73,6 +75,12 @@ dependencies = ["build"]
 script = '''
 mkdir -p lua
 cp ./target/release/libwasm_nvim.so ./lua/wasm_nvim.so'''
+dependencies = ["build"]
+
+[tasks.move_mac]
+script = '''
+mkdir -p lua
+cp ./target/release/libwasm_nvim.dylib ./lua/wasm_nvim.so'''
 dependencies = ["build"]
 
 [tasks.build_lin]
