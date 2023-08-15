@@ -29,15 +29,13 @@ jobs:
           fetch-depth: 0
 
       - name: Prepare Env Build And Test
-        shell: cmd
+        shell: bash
         run: |
           cargo install cargo-make
           wget "https://github.com/neovim/neovim/releases/download/stable/nvim-win64.zip"
           tar -xf nvim-win64.zip
-          set TMP=%PATH%
-          set PATH=%CD%\nvim-win64\bin\;%TMP%
+          export PATH=$PWD/nvim-win64/bin/:$PATH
           wget "https://ziglang.org/download/0.11.0/zig-windows-x86_64-0.11.0.zip"
           tar -xf zig-windows-x86_64-0.11.0.zip
-          set TMP=%PATH%
-          set PATH=%CD%\zig-windows-x86_64-0.11.0\;%TMP%
+          export PATH=$PWD/zig-windows-x86_64-0.11.0/:$PATH
           cargo make test
