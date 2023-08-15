@@ -21,6 +21,25 @@ jobs:
           export PATH=$PWD/zig-linux-x86_64-0.11.0/:$PATH
           cargo make test
 
+
+  mac_os:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Prepare Env Build And Test
+        run: |
+          cargo install cargo-make
+          wget "https://github.com/neovim/neovim/releases/download/v0.9.1/nvim-macos.tar.gz"
+          tar -xzf nvim-macos64.tar.gz
+          export PATH=$PWD/nvim-macos64/bin/:$PATH
+          wget "https://ziglang.org/download/0.11.0/zig-macos-x86_64-0.11.0.tar.xz"
+          tar -xf zig-macos-x86_64-0.11.0.tar.xz
+          export PATH=$PWD/zig-macos-x86_64-0.11.0/:$PATH
+          cargo make test
+
   windows:
     runs-on: windows-latest
     steps:
