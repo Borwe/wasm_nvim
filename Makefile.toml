@@ -12,6 +12,11 @@ command = "nvim"
 args = ["-u","NONE","-l","./default_cfg/testing.lua"]
 dependencies = ["move","zig_test"]
 
+[tasks.ci_test]
+command = "nvim"
+args = ["-u","NONE","-l","./default_cfg/testing.lua"]
+dependencies = ["move","ci_zig_test"]
+
 [tasks.docker_test]
 command = "/downloads/nvim-linux64/bin/nvim"
 args = ["-u","NONE","-l","./default_cfg/testing.lua"]
@@ -19,6 +24,11 @@ dependencies = ["move","docker_zig_test"]
 
 [tasks.docker_zig_test]
 command = "/downloads/zig-linux-x86_64-0.11.0/zig"
+cwd = "./wasm"
+args = ["build-lib","tests.zig","-target","wasm32-wasi", "-dynamic", "-rdynamic"]
+
+[tasks.ci_zig_test]
+command = "/downloads/zig-windows-x86_64-0.11.0/zig"
 cwd = "./wasm"
 args = ["build-lib","tests.zig","-target","wasm32-wasi", "-dynamic", "-rdynamic"]
 
