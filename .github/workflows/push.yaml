@@ -12,8 +12,8 @@ jobs:
 
       - name: Prepare Env Build And Test
         run: |
-          apt-get update
           cargo install cargo-make
+          apt-get update
           wget "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz"
           tar -xzf nvim-linux64.tar.gz
           export PATH=$PWD/nvim-linux64/bin/:$PATH
