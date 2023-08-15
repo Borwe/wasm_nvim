@@ -29,6 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Prepare Env Build And Test
+        shell: cmd
         run: |
           cargo install cargo-make
           curl "https://github.com/neovim/neovim/releases/download/stable/nvim-win64.zip" --output nvim-win64.zip
