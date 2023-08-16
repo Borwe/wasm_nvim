@@ -92,7 +92,7 @@ jobs:
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
-          prerelease: true 
-          title: "Development Build"
+          prerelease: false 
+          title: " Release ${{ github.event.inputs.tag_name }}"
           files: |
             ./wasm_nvim_${{matrix.config.os}}.zip
