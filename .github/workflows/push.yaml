@@ -3,60 +3,71 @@ name: Push Build
 on: push
 
 jobs:
-  linux:
-    runs-on: ubuntu-latest
+  build_and_test:
+    name: ${{matrix.config.name}}
+    runs-on: ${{matrix.config.os}}
+    strategy:
+      matrix:
+        config:
+          - {
+              name: "Linux Build & Test",
+              os: ubuntu-latest
+            }
+          - {
+              name: "Microsoft Windows Build & Test",
+              os: windows-latest
+            }
+          - {
+              name: "MacOs Build & Test",
+              os: macos-latest
+            }
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Prepare Env Build And Test
+      - name: Install Cargo make
         run: |
           cargo install cargo-make
+
+      - name: Download files Linux
+        if: matrix.os.config == 'ubuntu-latest'
+        run: |
           wget "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz"
           tar -xzf nvim-linux64.tar.gz
-          export PATH=$PWD/nvim-linux64/bin/:$PATH
           wget "https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz"
           tar -xf zig-linux-x86_64-0.11.0.tar.xz
+          export PATH=$PWD/nvim-linux64/bin/:$PATH
           export PATH=$PWD/zig-linux-x86_64-0.11.0/:$PATH
-          cargo make test
 
-
-  mac_os:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Prepare Env Build And Test
+      - name: Download files MacOs
+        if: matrix.os.config == 'macos-latest'
         run: |
-          cargo install cargo-make
           wget "https://github.com/neovim/neovim/releases/download/v0.9.1/nvim-macos.tar.gz"
           tar -xzf nvim-macos.tar.gz
-          export PATH=$PWD/nvim-macos/bin/:$PATH
           wget "https://ziglang.org/download/0.11.0/zig-macos-x86_64-0.11.0.tar.xz"
           tar -xf zig-macos-x86_64-0.11.0.tar.xz
+          export PATH=$PWD/nvim-macos/bin/:$PATH
           export PATH=$PWD/zig-macos-x86_64-0.11.0/:$PATH
+
+      - name: Download files Windows
+        if: matrix.os.config == 'windows-latest'
+        run: |
+          Invoke-WebRequest "https://github.com/neovim/neovim/releases/download/stable/nvim-win64.zip" -OutFile .\nvim-win64.zip
+          Expand-Archive nvim-win64.zip 
+          Invoke-WebRequest "https://ziglang.org/download/0.11.0/zig-windows-x86_64-0.11.0.zip" -OutFile .\zig-windows-x86_64-0.11.0.zip
+          Expand-Archive zig-windows-x86_64-0.11.0.zip
+
+      - name: Test For Unixes
+        if: matrix.os.config != 'windows-latest'
+        run: |
           cargo make test
 
-  windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Prepare Env Build And Test
+      - name: Test For Windows
+        if: matrix.os.config == 'windows-latest'
         shell: pwsh
         run: |
           $env:CD = Get-Location
-          cargo install cargo-make
-          Invoke-WebRequest "https://github.com/neovim/neovim/releases/download/stable/nvim-win64.zip" -OutFile .\nvim-win64.zip
-          Expand-Archive nvim-win64.zip 
           $env:PATH=$env:CD+'/nvim-win64/bin/;'+$env:PATH
-          Invoke-WebRequest "https://ziglang.org/download/0.11.0/zig-windows-x86_64-0.11.0.zip" -OutFile .\zig-windows-x86_64-0.11.0.zip
-          Expand-Archive zig-windows-x86_64-0.11.0.zip
-          tree ./zig-windows-x86_64-0.11.0/zig-windows-x86_64-0.11.0
           $env:PATH=$env:CD+'/zig-windows-x86_64-0.11.0/zig-windows-x86_64-0.11.0/;'+$env:PATH
           cargo make ci_test
