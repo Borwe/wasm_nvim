@@ -1,9 +1,14 @@
 use anyhow::Result;
 use std::env;
+#[cfg(windows)]
 use std::str::FromStr;
+#[cfg(windows)]
 use std::fs;
+#[cfg(windows)]
 use zip;
+#[cfg(windows)]
 use std::path::PathBuf;
+#[cfg(windows)]
 use std::process::Command;
 
 #[cfg(windows)]
