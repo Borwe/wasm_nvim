@@ -87,12 +87,83 @@ jobs:
         run: |
           tar -cf ./wasm_nvim_${{matrix.config.os}}.zip ./lua/wasm_nvim.dll
 
-      - uses: "marvinpinto/action-automatic-releases@latest"
-        if: contains(github.ref, 'tags/v')
+      - uses: "actions/upload-artifact@v2"
+        id: upload_artifact
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
-          prerelease: false 
-          title: " Release ${{ github.event.inputs.tag_name }}"
-          files: |
-            ./wasm_nvim_${{matrix.config.os}}.zip
+          path: ./wasm_nvim_${{matrix.config.os}}.zip
+          name: wasm_nvim_${{matrix.config.os}}.zip
+
+  release:
+    if: contains(github.ref, 'tags/v')
+    needs: build_and_test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Store Release url
+        run: |
+          echo "${{ steps.create_release.outputs.upload_url }}" > ./upload_url
+
+      - uses: actions/upload-artifact@v1
+        with:
+          path: ./upload_url
+          name: upload_url
+
+
+  publish:
+    if: contains(github.ref, 'tags/v')
+
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config:
+          - {
+              name: "Linux Build & Test",
+              os: ubuntu-latest
+            }
+          - {
+              name: "Microsoft Windows Build & Test",
+              os: windows-latest
+            }
+          - {
+              name: "MacOs Build & Test",
+              os: macos-latest
+            }
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v1
+        with:
+          name: wasm_nvim_${{matrix.config.os}}.zip
+          path: ./
+
+      - name: Download URL
+        uses: actions/download-artifact@v1
+        with:
+          name: upload_url
+          path: ./
+      - id: set_upload_url
+        run: |
+          upload_url=`cat ./upload_url`
+          echo ::set-output name=upload_url::$upload_url
+
+      - name: Upload to Release
+        id: upload_to_release
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.set_upload_url.outputs.upload_url }}
+          asset_path: ./wasm_nvim_${{matrix.config.os}}.zip
+          asset_name: wasm_nvim_${{matrix.config.os}}.zip
+          asset_content_type: application/zip
