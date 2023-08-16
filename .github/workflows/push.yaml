@@ -147,11 +147,13 @@ jobs:
           path: ./
 
       - name: Download URL
-        id: set_upload_url
         uses: actions/download-artifact@v1
         with:
           name: upload_url
           path: ./
+
+      - name: Set Upload URL
+        id: set_upload_url
         run: |
           upload_url=`cat ./upload_url`
           echo ::set-output name=upload_url::$upload_url
