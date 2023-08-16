@@ -99,17 +99,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
       - name: Create Release
         id: create_release
-        uses: elgohr/Github-Release-Action@v4
+        uses: actions/create-release@v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          title: Release${{ github.ref }}
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
 
       - name: Store Release url
         run: |
@@ -124,22 +123,20 @@ jobs:
   publish:
     needs: release
     if: contains(github.ref, 'tags/v')
-
     name: ${{ matrix.config.name }}
-    runs-on: ${{ matrix.config.os }}
     strategy:
       matrix:
         config:
           - {
-              name: "Linux Build & Test",
+              name: "Linux Release",
               os: ubuntu-latest
             }
           - {
-              name: "Microsoft Windows Build & Test",
+              name: "Microsoft Windows  Release",
               os: windows-latest
             }
           - {
-              name: "MacOs Build & Test",
+              name: "MacOs Release",
               os: macos-latest
             }
     steps:
@@ -150,11 +147,11 @@ jobs:
           path: ./
 
       - name: Download URL
+        id: set_upload_url
         uses: actions/download-artifact@v1
         with:
           name: upload_url
           path: ./
-      - id: set_upload_url
         run: |
           upload_url=`cat ./upload_url`
           echo ::set-output name=upload_url::$upload_url
