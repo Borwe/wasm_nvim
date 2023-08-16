@@ -79,5 +79,5 @@ jobs:
 
       - name: Zip file Unix
         run: |
-          zip ./lua/wasm_nvim.so ./wasm_nvim_$${{matrix.config.os}}.zip
+          zip -r ./wasm_nvim_${{matrix.config.os}}.zip ./lua/wasm_nvim.so 
 
