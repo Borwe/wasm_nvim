@@ -80,12 +80,16 @@ jobs:
       - name: Zip file Unix
         if: matrix.config.os != 'windows-latest'
         run: |
-          zip -r ./wasm_nvim_${{matrix.config.os}}.zip ./lua/wasm_nvim.so 
+          cd ./lua
+          zip -r ./wasm_nvim_${{matrix.config.os}}.zip ./wasm_nvim.so 
+          cp ./wasm_nvim_${{matrix.config.os}}.zip ../
 
       - name: Zip file Windows
         if: matrix.config.os == 'windows-latest'
         run: |
-          tar -cf ./wasm_nvim_${{matrix.config.os}}.zip ./lua/wasm_nvim.dll
+          cd ./lua
+          tar -cf ./wasm_nvim_${{matrix.config.os}}.zip ./wasm_nvim.dll
+          copy wasm_nvim_${{matrix.config.os}}.zip ..\
 
       - uses: "actions/upload-artifact@v2"
         id: upload_artifact
