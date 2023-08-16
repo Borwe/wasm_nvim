@@ -37,8 +37,6 @@ jobs:
           tar -xzf nvim-linux64.tar.gz
           wget "https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz"
           tar -xf zig-linux-x86_64-0.11.0.tar.xz
-          export PATH=$PWD/nvim-linux64/bin/:$PATH
-          export PATH=$PWD/zig-linux-x86_64-0.11.0/:$PATH
 
       - name: Download files MacOs
         if: matrix.config.os == 'macos-latest'
@@ -47,8 +45,6 @@ jobs:
           tar -xzf nvim-macos.tar.gz
           wget "https://ziglang.org/download/0.11.0/zig-macos-x86_64-0.11.0.tar.xz"
           tar -xf zig-macos-x86_64-0.11.0.tar.xz
-          export PATH=$PWD/nvim-macos/bin/:$PATH
-          export PATH=$PWD/zig-macos-x86_64-0.11.0/:$PATH
 
       - name: Download files Windows
         if: matrix.config.os == 'windows-latest'
@@ -58,9 +54,18 @@ jobs:
           Invoke-WebRequest "https://ziglang.org/download/0.11.0/zig-windows-x86_64-0.11.0.zip" -OutFile .\zig-windows-x86_64-0.11.0.zip
           Expand-Archive zig-windows-x86_64-0.11.0.zip
 
-      - name: Test For Unixes
-        if: matrix.config.os != 'windows-latest'
+      - name: Test For Linux
+        if: matrix.config.os == 'ubuntu-latest'
         run: |
+          export PATH=$PWD/nvim-linux64/bin/:$PATH
+          export PATH=$PWD/zig-linux-x86_64-0.11.0/:$PATH
+          cargo make test
+
+      - name: Test For MacOs
+        if: matrix.config.os == 'macos-latest'
+        run: |
+          export PATH=$PWD/nvim-macos/bin/:$PATH
+          export PATH=$PWD/zig-macos-x86_64-0.11.0/:$PATH
           cargo make test
 
       - name: Test For Windows
