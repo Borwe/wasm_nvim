@@ -118,6 +118,7 @@ jobs:
 
 
   publish:
+    needs: release
     if: contains(github.ref, 'tags/v')
 
     name: ${{ matrix.config.name }}
