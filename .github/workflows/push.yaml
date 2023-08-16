@@ -31,7 +31,7 @@ jobs:
           cargo install cargo-make
 
       - name: Download files Linux
-        if: matrix.os.config == 'ubuntu-latest'
+        if: matrix.config.os == 'ubuntu-latest'
         run: |
           wget "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz"
           tar -xzf nvim-linux64.tar.gz
@@ -41,7 +41,7 @@ jobs:
           export PATH=$PWD/zig-linux-x86_64-0.11.0/:$PATH
 
       - name: Download files MacOs
-        if: matrix.os.config == 'macos-latest'
+        if: matrix.config.os == 'macos-latest'
         run: |
           wget "https://github.com/neovim/neovim/releases/download/v0.9.1/nvim-macos.tar.gz"
           tar -xzf nvim-macos.tar.gz
@@ -51,7 +51,7 @@ jobs:
           export PATH=$PWD/zig-macos-x86_64-0.11.0/:$PATH
 
       - name: Download files Windows
-        if: matrix.os.config == 'windows-latest'
+        if: matrix.config.os == 'windows-latest'
         run: |
           Invoke-WebRequest "https://github.com/neovim/neovim/releases/download/stable/nvim-win64.zip" -OutFile .\nvim-win64.zip
           Expand-Archive nvim-win64.zip 
@@ -59,12 +59,12 @@ jobs:
           Expand-Archive zig-windows-x86_64-0.11.0.zip
 
       - name: Test For Unixes
-        if: matrix.os.config != 'windows-latest'
+        if: matrix.config.os != 'windows-latest'
         run: |
           cargo make test
 
       - name: Test For Windows
-        if: matrix.os.config == 'windows-latest'
+        if: matrix.config.os == 'windows-latest'
         shell: pwsh
         run: |
           $env:CD = Get-Location
