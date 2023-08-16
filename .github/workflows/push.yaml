@@ -86,3 +86,13 @@ jobs:
         if: matrix.config.os == 'windows-latest'
         run: |
           tar -cf ./wasm_nvim_${{matrix.config.os}}.zip ./lua/wasm_nvim.dll
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        if: contains(github.ref, 'tags/v')
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true 
+          title: "Development Build"
+          files: |
+            ./wasm_nvim_${{matrix.config.os}}.zip
