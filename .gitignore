@@ -3,7 +3,6 @@
 *.dll
 *.so
 /venv
-/lua
 
 *.wasm
 *.wasm.o
