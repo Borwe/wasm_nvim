@@ -78,6 +78,11 @@ jobs:
           cargo make ci_test
 
       - name: Zip file Unix
+        if: matrix.config.os != 'windows-latest'
         run: |
           zip -r ./wasm_nvim_${{matrix.config.os}}.zip ./lua/wasm_nvim.so 
 
+      - name: Zip file Windows
+        if: matrix.config.os == 'windows-latest'
+        run: |
+          tar -cf ./wasm_nvim_${{matrix.config.os}}.zip ./lua/wasm_nvim.dll
