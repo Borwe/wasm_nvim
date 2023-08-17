@@ -65,6 +65,8 @@ wasm.tests.luaExecExample();
 cargo make build
 ```
 
+Then move the shared library from /target/release/*.so or *.dll to a `./lua` folder on the neovim runtime path so as to use it.
+
 ### Requirements:
 
 - Cargo Make `cargo make install`
