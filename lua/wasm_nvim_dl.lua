@@ -8,7 +8,7 @@ local M = {}
 
 M.download = function(system)
   local dl = "";
-  local dir = os.tmpname();
+  local dir = os.tmpname()..math.random(100);
   print(dir)
   if system=="windows"  then
     -- fix separater on windows
