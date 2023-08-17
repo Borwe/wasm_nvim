@@ -33,6 +33,42 @@ Requires:
 
 We would need an allocation and deallocation function implementation on every wasm module, that the developers of it would need to create for themselves as data between the host **(this rust library)** and the wasm plugin can only currently be shared using i32 or f32, directly, but other objects like buffers, structs, etc, need more than just 32bits therefore we communicate using pointers to memory to the module to access and manipulate the data from the host side, where applicable, and normally this involves json.
 
+## Installing and Setting up from release packages
+
+```lua
+-- for downloading shared librar from releases do this
+-- if you don't want to build from source and just get
+-- going. Warning, only supports, windows, linux, and macos
+require("wasm_nvim_dl").download("windows")
+-- Replace "windows" with either "linux", or "macos" for respective OS.
+
+-- load wasm_nvim
+local wasm = require("wasm_nvim")
+
+-- this next line scan and load .wasm files into space
+-- should be called only once, preferebly on your init.lua
+wasm.setup {
+  --debug = true -- uncomment to see debug info printed out, good for debugging issues.
+}
+
+-- Here tests is a wasm file, test.wasm inside a ./wasm folder
+-- located in neovim runtimepath.
+-- The luaExecExample is an example of a function exposed by the test.wasm module.
+wasm.tests.luaExecExample();
+
+
+```
+
+## Building from source
+
+```sh
+cargo make build
+```
+
+### Requirements:
+
+- Cargo Make `cargo make install`
+
 ## Required by Module
 
 - a function called `functionality` that is exposed/exported so that it can be called from `wasm_nvim` library. The function returns a json defining what functions are exported, and what they take as parameters, also what they return. 
