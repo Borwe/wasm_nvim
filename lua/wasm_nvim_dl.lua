@@ -8,25 +8,28 @@ local M = {}
 
 M.download = function(system)
   local dl = "";
+  local dir = os.tmpname();
+  print(dir)
   if system=="windows"  then
     -- fix separater on windows
     path = path:gsub("/","\\")
+    os.execute("mkdir "..dir:gsub("/","\\"));
     dl = "https://github.com/Borwe/wasm_nvim/releases/download/v0.0.1/wasm_nvim_windows-latest.zip"
   elseif system == "macos" then
+    os.execute("mkdir -p"..dir);
     dl = "https://github.com/Borwe/wasm_nvim/releases/download/v0.0.1/wasm_nvim_macos-latest.zip"
   elseif system == "linux" then
+    os.execute("mkdir -p"..dir);
     dl = "https://github.com/Borwe/wasm_nvim/releases/download/v0.0.1/wasm_nvim_ubuntu-latest.zip"
   else
     vim.api.nvim_echo({{"Error, OS, can only be windows, linux, or macos","ErrorMsg"}}, true, {})
+    return;
   end
 
 
   print("PATH: "..path)
 
-  local dir = os.tmpname();
-  print(dir)
 
-  vim.fn.mkdir(dir, "p", 493);
   local curdir = vim.fn.chdir(dir)
   if os.execute("curl -L "..dl.." -o wasm.zip") ~= 0 then
     vim.fn.chdir(curdir)
