@@ -69,7 +69,7 @@ Then move the shared library from /target/release/*.so or *.dll to a `./lua` fol
 
 ### Requirements:
 
-- Cargo Make `cargo make install`
+- Cargo Make `cargo install cargo-make`
 
 ## Required by Module
 
