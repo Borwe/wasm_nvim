@@ -49,7 +49,7 @@ M.download = function(system)
       vim.api.nvim_echo({{"Error, tar not found to unzip", "ErrorMsg"}}, true, {})
     end
     vim.fn.chdir(curdir)
-      os.execute("cp "..dir.."/wasm_nvim.dll ./"..path)
+      os.execute("cp "..dir.."/wasm_nvim.so ./"..path)
   end
 end
 
