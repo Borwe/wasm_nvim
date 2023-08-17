@@ -82,7 +82,7 @@ jobs:
           $env:PATH=$env:CD+'/nvim-win64/bin/;'+$env:PATH
           $env:PATH=$env:CD+'/zig-windows-x86_64-0.11.0/zig-windows-x86_64-0.11.0/;'+$env:PATH
           cargo make ci_zig_test
-          ./nvim-win64/bin/nvim -l ./default_cfg/testing_macos.lua
+          nvim-win64\bin\nvim -l default_cfg\testing_macos.lua
           cargo make ci_test
 
       - name: Zip file Unix
