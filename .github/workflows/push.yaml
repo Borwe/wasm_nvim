@@ -59,6 +59,9 @@ jobs:
         run: |
           export PATH=$PWD/nvim-linux64/bin/:$PATH
           export PATH=$PWD/zig-linux-x86_64-0.11.0/:$PATH
+          cargo make zig_test
+          nvim -l ./default_cfg/testing_linux.lua
+          rm ./lua/wasm_nvim.so
           cargo make test
 
       - name: Test For MacOs
@@ -66,6 +69,9 @@ jobs:
         run: |
           export PATH=$PWD/nvim-macos/bin/:$PATH
           export PATH=$PWD/zig-macos-x86_64-0.11.0/:$PATH
+          cargo make zig_test
+          nvim -l ./default_cfg/testing_macos.lua
+          rm ./lua/wasm_nvim.so
           cargo make test
 
       - name: Test For Windows
@@ -75,6 +81,8 @@ jobs:
           $env:CD = Get-Location
           $env:PATH=$env:CD+'/nvim-win64/bin/;'+$env:PATH
           $env:PATH=$env:CD+'/zig-windows-x86_64-0.11.0/zig-windows-x86_64-0.11.0/;'+$env:PATH
+          cargo make ci_zig_test
+          ./nvim-win64/bin/nvim -l ./default_cfg/testing_macos.lua
           cargo make ci_test
 
       - name: Zip file Unix
