@@ -15,10 +15,10 @@ zip = "0.6"
 cc = "1.0"
 
 [target.'cfg(windows)'.dependencies]
-mlua = {version = "0.8.9", features = ["luajit", "module"]}
+mlua = {version = "0.10.0", features = ["luajit","module"]}
 
 [target.'cfg(unix)'.dependencies]
-mlua = {version = "0.8.9", features = ["luajit", "vendored", "module"]}
+mlua = {version = "0.10.0", features = ["luajit", "vendored", "module"]}
 
 [dependencies]
 anyhow = "1.0"

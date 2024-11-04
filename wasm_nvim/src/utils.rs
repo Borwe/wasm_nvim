@@ -1,40 +1,40 @@
 use mlua::prelude::*;
 use crate::wasm_state::WASM_STATE;
 
-pub fn debug(lua: &Lua, data: &str) ->  LuaResult<()>{
+pub fn debug(lua: &Lua, data: &str) -> LuaResult<()> {
     if WASM_STATE.lock().unwrap().borrow().debug == true {
-        lua.globals().get::<_, LuaFunction>("print")?
-            .call::<_,()>(data.to_lua(lua)?)?;
+        lua.globals().call_function::<()>("print", data)
+    }else {
+        Ok(())
     }
-    Ok(())
 }
 
-pub fn lua_require<'a,LuaType>(lua: &'a Lua, pkg: &'a str)
-    -> LuaResult<LuaType> where LuaType: Clone + FromLuaMulti<'a>{
-    let result = lua.globals().get::<_, LuaFunction>("require")?
-        .call::<_, LuaType>(pkg);
+pub fn lua_require<LuaType>(lua: &Lua, pkg: &str)
+    -> LuaResult<LuaType> where LuaType: Clone + FromLuaMulti{
+    let result = lua.globals().get::<LuaFunction>("require")?
+        .call(pkg);
     result
 }
 
-pub fn lua_this<'a>(lua: &'a Lua) -> LuaResult<LuaTable>{
-    lua_require::<'a, LuaTable>(lua, "wasm_nvim")
+pub fn lua_this(lua: & Lua) -> LuaResult<LuaTable>{
+    lua_require::<LuaTable>(lua, "wasm_nvim")
 }
 
 pub fn lua_vim_api<'a>(lua: &'a Lua)-> LuaResult<LuaTable>{
-    lua.globals().get::<_, LuaTable>("vim")?
-        .get::<_, LuaTable>("api")
+    lua.globals().get::<LuaTable>("vim")?
+        .get::<LuaTable>("api")
 }
 
 pub fn lua_json_encode(lua: &Lua, obj: LuaValue) -> LuaResult<String> {
-    let result = lua.globals().get::<_, LuaTable>("vim")?
-        .get::<_, LuaTable>("fn")?.get::<_, LuaFunction>("json_encode")?
-        .call::<_, LuaString>(obj)?
+    let result = lua.globals().get::<LuaTable>("vim")?
+        .get::<LuaTable>("fn")?.get::<LuaFunction>("json_encode")?
+        .call::<LuaString>(obj)?
                     .to_str()?.to_string();
     Ok(result)
 }
 
-pub fn lua_json_decode<'a>(lua: &'a Lua, obj: LuaString<'a>) -> LuaResult<LuaValue<'a>> {
-    lua.globals().get::<_, LuaTable>("vim")?
-            .get::<_, LuaTable>("fn")?.get::<_, LuaFunction>("json_decode")?
-            .call::<_, LuaValue>(obj)
+pub fn lua_json_decode(lua: & Lua, obj: LuaString) -> LuaResult<LuaValue> {
+    lua.globals().get::< LuaTable>("vim")?
+            .get::<LuaTable>("fn")?.get::<LuaFunction>("json_decode")?
+            .call::<LuaValue>(obj)
 }

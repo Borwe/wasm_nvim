@@ -12,15 +12,15 @@ use nvim_interface::{Functionality, add_functionality_to_module};
 fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
     
     //setup debug option
-    match settings.get::<_, bool>("debug") {
+    match settings.get::<bool>("debug") {
         Ok(x) => WASM_STATE.lock().unwrap().get_mut().debug = x,
         Err(_) => WASM_STATE.lock().unwrap().get_mut().debug = false
     };
 
     //get wasm modules
     let runtime_paths = utils::lua_vim_api(lua).unwrap()
-        .get::<_, LuaFunction>("nvim_list_runtime_paths")
-        .unwrap().call::<_, LuaValue>(()).unwrap();
+        .get::<LuaFunction>("nvim_list_runtime_paths")
+        .unwrap().call::<LuaValue>(()).unwrap();
 
     let runtime_paths_jsoned: serde_json::Value = serde_json::from_str(
         utils::lua_json_encode(lua, runtime_paths).unwrap()
@@ -45,9 +45,9 @@ fn parse_wasm_dir(lua: &Lua, settings: &LuaTable)-> LuaResult<()>{
 }
 
 fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
-    let api_table = lua.globals().get::<_, LuaTable>("vim")?
-        .get::<_,LuaTable>("fn")?
-        .get::<_, LuaFunction>("api_info")?.call::<_, LuaValue>(())?;
+    let api_table = lua.globals().get::<LuaTable>("vim")?
+        .get::<LuaTable>("fn")?
+        .get::<LuaFunction>("api_info")?.call::<LuaValue>(())?;
     let apis_json = utils::lua_json_encode(lua, api_table)?;
 
     let api_vals = serde_json::value::Value::from_str(&apis_json)
@@ -69,7 +69,7 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
                 let json = serde_json::to_value(&WASM_STATE.lock().unwrap().get_mut()
                     .get_value(id).unwrap()).unwrap();
 
-                let mut func = utils::lua_vim_api(lua).unwrap().get::<_,LuaFunction>(name_c.as_str())
+                let mut func = utils::lua_vim_api(lua).unwrap().get::<LuaFunction>(name_c.as_str())
                     .unwrap();
 
 
@@ -83,7 +83,7 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
                     func = func.bind(v).unwrap();
                 }
 
-                func.call::<(),()>(()).unwrap();
+                func.call::<()>(()).unwrap();
             }).unwrap();
         }else if params>0 && returns == true {
             //testable by testing nvim_list_bufs
@@ -94,7 +94,7 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
                 let json = serde_json::to_value(&WASM_STATE.lock().unwrap().get_mut()
                     .get_value(id).unwrap()).unwrap();
 
-                let mut func = utils::lua_vim_api(lua).unwrap().get::<_,LuaFunction>(name_c.as_str())
+                let mut func = utils::lua_vim_api(lua).unwrap().get::<LuaFunction>(name_c.as_str())
                     .unwrap();
 
 
@@ -108,7 +108,7 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
                     func = func.bind(v).unwrap();
                 }
 
-                let result = func.call::<(),LuaValue>(()).unwrap();
+                let result = func.call::<LuaValue>(()).unwrap();
                 let string_result = utils::lua_json_encode(lua, result).unwrap();
                 let id = &WASM_STATE.lock().unwrap().get_mut().get_id();
                 let _ = &WASM_STATE.lock().unwrap().get_mut().set_value(*id,string_result).unwrap();
@@ -122,8 +122,8 @@ fn setup_nvim_apis(lua: &Lua) -> LuaResult<()>{
                 let id = &WASM_STATE.lock().unwrap().get_mut().get_id();
 
                 let result = utils::lua_vim_api(lua).unwrap()
-                    .get::<_,LuaFunction>(name_c.as_str()).unwrap()
-                    .call::<(),LuaValue>(()).unwrap();
+                    .get::<LuaFunction>(name_c.as_str()).unwrap()
+                    .call::<LuaValue>(()).unwrap();
 
                 let string_result = utils::lua_json_encode(lua, result).unwrap();
                 let _ = &WASM_STATE.lock().unwrap().get_mut().set_value(*id,string_result).unwrap();
@@ -295,7 +295,7 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
     Ok(())
 }
 
-fn setup(lua: &'static Lua, settings: LuaTable)-> LuaResult<()>{
+fn setup(lua: & Lua, settings: LuaTable)-> LuaResult<()>{
 
     parse_wasm_dir(lua, &settings)?;
     setup_nvim_apis(lua)?;
@@ -305,7 +305,7 @@ fn setup(lua: &'static Lua, settings: LuaTable)-> LuaResult<()>{
 }
 
 #[mlua::lua_module]
-fn wasm_nvim(lua: &'static Lua) -> LuaResult<LuaTable>{
+fn wasm_nvim(lua: &Lua) -> LuaResult<LuaTable>{
         
     let exports = lua.create_table()?;
 

@@ -82,8 +82,8 @@ impl NvimCreateAutoCmd {
                 //func takes an id that points to the value representation of
                 //parameters to this top function
                 let wasm_func = utils::lua_this(lua)?
-                    .get::<_, LuaTable>(self.module_from.as_str())?
-                    .get::<_, LuaFunction>(func_name.as_str())?;
+                    .get::<LuaTable>(self.module_from.as_str())?
+                    .get::<LuaFunction>(func_name.as_str())?;
 
 
                 let json_to_send = utils::lua_json_encode(lua, table)?;
@@ -93,7 +93,7 @@ impl NvimCreateAutoCmd {
                 WASM_STATE.lock().unwrap().borrow_mut().set_value(id, json_to_send).unwrap();
 
                 //call the function passing the id
-                wasm_func.call::<_,bool>(id)
+                wasm_func.call::<bool>(id)
             })?;
             VariantNvimType::T1(func)
         };
@@ -123,7 +123,7 @@ pub(crate) fn add_functionality_to_module<'a>(lua: &'a Lua,
     let params = functionality.params.clone();
     let returns = functionality.returns.clone();
 
-    let func = move |lua: &'a Lua, obj: LuaValue| -> LuaResult<LuaValue>{
+    let func = move |lua: &Lua, obj: LuaValue| -> LuaResult<LuaValue>{
         // We can do this to improve speed, since calling
         // lua functions is single threaded on lua side, no need
         // of locking everytime
@@ -180,13 +180,14 @@ pub(crate) fn add_functionality_to_module<'a>(lua: &'a Lua,
 
     utils::debug(lua, &format!("FUNC IS: {}", functionality.name))?;
     let wasm_nvim = utils::lua_this(lua)?;
-    match wasm_nvim.get::<_, LuaTable>(wasm_name.as_str()){
+    match wasm_nvim.get::<LuaTable>(wasm_name.as_str()){
         Ok(table) => {
-            table.set::<_, LuaFunction>(functionality.name.as_str(), lua.create_function(func)?)
+            let luafunc = lua.create_function(func)?;
+            table.set(functionality.name.as_str(), luafunc)
         },
         Err(_) => {
             let table = lua.create_table()?;
-            table.set::<_, LuaFunction>(functionality.name.as_str(), lua.create_function(func)?)?;
+            table.set(functionality.name.as_str(), lua.create_function(func)?)?;
             wasm_nvim.set(wasm_name, table)
         }
     }
@@ -198,6 +199,6 @@ pub(crate) fn nvim_create_autocmd(id: u32) -> i64 {
         .get_value(id).unwrap()).unwrap();
     aucmd_json.validate().unwrap();
     let args = aucmd_json.get_param(lua).unwrap();
-    utils::lua_vim_api(lua).unwrap().get::<_,LuaFunction>("nvim_create_autocmd")
-        .unwrap().call::<_,LuaInteger>(args).unwrap()
+    utils::lua_vim_api(lua).unwrap().get::<LuaFunction>("nvim_create_autocmd")
+        .unwrap().call::<LuaInteger>(args).unwrap()
 }

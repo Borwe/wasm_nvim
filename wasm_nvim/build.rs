@@ -20,8 +20,12 @@ const LUAJIT_DIR: &'static str = "LuaJIT-2.1.0-beta3";
 #[cfg(windows)]
 async fn get_luajit_source()-> Result<()>{
 
-    let resp = reqwest::get(LUAJIT_2_1_0_BETA3_LINK)
-        .await?.bytes().await?;
+    let resp = match reqwest::get(LUAJIT_2_1_0_BETA3_LINK)
+        .await {
+        Ok(res) if res.status() == 200 => res.bytes().await.expect("Couldn't get bytes"),
+        Ok(res) => panic!("Got response code {}",res.status()),
+        Err(e) => panic!("Error downloading: {}", e),
+    };
     let target_dir = PathBuf::from_str(
         &env::var("OUT_DIR").expect("Cargo out_dir not found"))?
         .parent().unwrap().parent().unwrap().join("luaj.zip");
