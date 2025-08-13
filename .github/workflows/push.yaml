@@ -33,23 +33,23 @@ jobs:
       - name: Download files Linux
         if: matrix.config.os == 'ubuntu-latest'
         run: |
-          wget "https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz"
-          tar -xzf nvim-linux64.tar.gz
+          wget "https://github.com/neovim/neovim/releases/download/v0.11.3/nvim-linux-x86_64.tar.gz"
+          tar -xzf nvim-linux-x86_64.tar.gz
           wget "https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz"
           tar -xf zig-linux-x86_64-0.11.0.tar.xz
 
       - name: Download files MacOs
         if: matrix.config.os == 'macos-latest'
         run: |
-          wget "https://github.com/neovim/neovim/releases/download/v0.9.1/nvim-macos.tar.gz"
-          tar -xzf nvim-macos.tar.gz
+          wget "https://github.com/neovim/neovim/releases/download/v0.11.3/nvim-macos-x86_64.tar.gz"
+          tar -xzf nvim-macos-x86_64.tar.gz
           wget "https://ziglang.org/download/0.11.0/zig-macos-x86_64-0.11.0.tar.xz"
           tar -xf zig-macos-x86_64-0.11.0.tar.xz
 
       - name: Download files Windows
         if: matrix.config.os == 'windows-latest'
         run: |
-          Invoke-WebRequest "https://github.com/neovim/neovim/releases/download/stable/nvim-win64.zip" -OutFile .\nvim-win64.zip
+          Invoke-WebRequest "https://github.com/neovim/neovim/releases/download/v0.11.3/nvim-win64.zip" -OutFile .\nvim-win64.zip
           Expand-Archive nvim-win64.zip 
           Invoke-WebRequest "https://ziglang.org/download/0.11.0/zig-windows-x86_64-0.11.0.zip" -OutFile .\zig-windows-x86_64-0.11.0.zip
           Expand-Archive zig-windows-x86_64-0.11.0.zip
