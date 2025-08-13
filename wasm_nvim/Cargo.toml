@@ -14,13 +14,8 @@ anyhow = "1.0"
 zip = "0.6"
 cc = "1.0"
 
-[target.'cfg(windows)'.dependencies]
-mlua = {version = "0.10.0", features = ["luajit","module"]}
-
-[target.'cfg(unix)'.dependencies]
-mlua = {version = "0.10.0", features = ["luajit", "vendored", "module"]}
-
 [dependencies]
+mlua = {version = "0.11.2", features = ["luajit", "module"]}
 anyhow = "1.0"
 lazy_static = "1.4.0"
 libc = "0.2.147"

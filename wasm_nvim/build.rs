@@ -12,15 +12,15 @@ use std::path::PathBuf;
 use std::process::Command;
 
 #[cfg(windows)]
-const LUAJIT_2_1_0_BETA3_LINK: &'static str = "https://luajit.org/download/LuaJIT-2.1.0-beta3.zip";
+const LUAJIT_2_1_LINK: &'static str = "https://github.com/luajit/luajit/archive/51d4c26ec7805d77bfc3470fdf99b73c4ef2faec.zip";
 
 #[cfg(windows)]
-const LUAJIT_DIR: &'static str = "LuaJIT-2.1.0-beta3";
+const LUAJIT_DIR: &'static str = "LuaJIT-51d4c26ec7805d77bfc3470fdf99b73c4ef2faec";
 
 #[cfg(windows)]
 async fn get_luajit_source()-> Result<()>{
 
-    let resp = match reqwest::get(LUAJIT_2_1_0_BETA3_LINK)
+    let resp = match reqwest::get(LUAJIT_2_1_LINK)
         .await {
         Ok(res) if res.status() == 200 => res.bytes().await.expect("Couldn't get bytes"),
         Ok(res) => panic!("Got response code {}",res.status()),
