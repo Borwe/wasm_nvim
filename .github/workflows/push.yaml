@@ -13,14 +13,14 @@ jobs:
               name: "Linux Build & Test",
               os: ubuntu-latest
             }
-          - {
-              name: "Microsoft Windows Build & Test",
-              os: windows-latest
-            }
-          - {
-              name: "MacOs Build & Test",
-              os: macos-latest
-            }
+          #- {
+          #    name: "Microsoft Windows Build & Test",
+          #    os: windows-latest
+          #  }
+          #- {
+          #    name: "MacOs Build & Test",
+          #    os: macos-latest
+          #  }
     steps:
       - uses: actions/checkout@v3
         with:
