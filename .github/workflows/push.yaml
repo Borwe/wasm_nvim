@@ -59,10 +59,9 @@ jobs:
         run: |
           export PATH=$PWD/nvim-linux64/bin/:$PATH
           export PATH=$PWD/zig-linux-x86_64-0.11.0/:$PATH
-          cargo make zig_test
           nvim -l ./default_cfg/testing_linux.lua
           rm ./lua/wasm_nvim.so
-          cargo make test
+          cargo xtask test
 
       - name: Test For MacOs
         if: matrix.config.os == 'macos-latest'

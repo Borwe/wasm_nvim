@@ -63,7 +63,7 @@ export fn nvimListBufs() void {
     std.io.getStdOut().writer().print("--NVIM_LIST_BUFS_TEST--", .{}) catch unreachable;
     const id = nvim_list_bufs();
     const size = get_value_size(id);
-    var buf_list = get_value_addr(id)[0..size];
+    const buf_list = get_value_addr(id)[0..size];
     var mng = ArrayList(u8).init(aloc);
     defer mng.deinit();
     mng.items = buf_list;
@@ -125,7 +125,7 @@ export fn luaEvalExample() void {
     const return_second = lua_eval(id);
 
     var size_in = get_value_size(return_first);
-    var addr_items = get_value_addr(return_first)[0..size_in];
+    const addr_items = get_value_addr(return_first)[0..size_in];
     var return_val_1 = ArrayList(u8).init(aloc);
     defer return_val_1.deinit();
     return_val_1.items = addr_items;
@@ -133,7 +133,7 @@ export fn luaEvalExample() void {
     writer.print("\n{s} -> Goten the following returned from calling print_hello_return_nothing()", .{return_val_1.items}) catch unreachable;
 
     size_in = get_value_size(return_second);
-    var addr_items_2 = get_value_addr(return_second)[0..size_in];
+    const addr_items_2 = get_value_addr(return_second)[0..size_in];
     var return_val_2 = ArrayList(u8).init(aloc);
     defer return_val_2.deinit();
     return_val_2.items = addr_items_2;
@@ -148,7 +148,7 @@ export fn groups() void {
     var jsoned_grp = ArrayList(u8).init(aloc);
     jsoned_grp.appendSlice("[\"MyOwnTestGroup\", {\"clear\": false}]") catch unreachable;
     var id = get_id();
-    var addr = get_addr(&jsoned_grp.items[0]);
+    const addr = get_addr(&jsoned_grp.items[0]);
     set_value(id, addr, jsoned_grp.items.len);
 
     id = nvim_create_augroup(id);

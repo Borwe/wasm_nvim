@@ -4,9 +4,13 @@ vim.opt.runtimepath:append(vim.fn.getcwd())
 vim.opt.runtimepath:append(vim.fn.getcwd().."/testing_lua_module")
 local wasm = require("wasm_nvim")
 
+print("Starting setup")
+
 wasm.setup {
   --debug = true
 }
+
+print("LOADED SETUP SUCCESFULLY")
 
 wasm.tests.luaExecExample();
 wasm.tests.luaEvalExample();

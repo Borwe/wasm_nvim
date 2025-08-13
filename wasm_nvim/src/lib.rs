@@ -313,7 +313,3 @@ fn wasm_nvim(lua: &Lua) -> LuaResult<LuaTable>{
     Ok(exports)
 }
 
-#[cfg(test)]
-mod tests {
-
-}
