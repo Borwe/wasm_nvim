@@ -27,6 +27,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Cargo make
+        if: matrix.config.os != 'ubuntu-latest'
         run: |
           cargo install cargo-make
 
