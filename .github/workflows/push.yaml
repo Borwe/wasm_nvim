@@ -94,8 +94,9 @@ jobs:
           cp ./wasm_nvim_${{matrix.config.os}}.zip ../
 
       - name: Zip file Windows
-        if: matrix.config.os == 'windows-latest'
+        if: matrix.config.os == 'windows-latest' && contains(github.ref, 'tags/v')
         run: |
+          #TODO: remove check for tag, once previous CI steps pass
           cd ./lua
           tar -cf ./wasm_nvim_${{matrix.config.os}}.zip ./wasm_nvim.dll
           copy wasm_nvim_${{matrix.config.os}}.zip ..\
