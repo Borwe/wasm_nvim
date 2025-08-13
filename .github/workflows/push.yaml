@@ -99,7 +99,7 @@ jobs:
           tar -cf ./wasm_nvim_${{matrix.config.os}}.zip ./wasm_nvim.dll
           copy wasm_nvim_${{matrix.config.os}}.zip ..\
 
-      - uses: "actions/upload-artifact@v2"
+      - uses: "actions/upload-artifact@v4"
         id: upload_artifact
         with:
           path: ./wasm_nvim_${{matrix.config.os}}.zip
