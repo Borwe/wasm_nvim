@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use anyhow::Result;
 use std::sync::Mutex;
 use wasmtime::*;
-use wasmtime_wasi::WasiCtx;
+use wasmtime_wasi::{p2::{WasiCtxBuilder}, preview1::WasiP1Ctx};
 use mlua::prelude::*;
 use std::collections::HashMap;
 
@@ -37,8 +37,8 @@ pub(crate) struct WasmNvimState{
     pub(crate) wasms: Vec<String>,
     pub(crate) debug: bool,
     pub(crate) wasm_engine: Engine,
-    pub(crate) linker: Linker<WasiCtx>,
-    pub(crate) store: Store<WasiCtx>,
+    pub(crate) linker: Linker<WasiP1Ctx>,
+    pub(crate) store: Store<WasiP1Ctx>,
     pub(crate) wasm_modules: HashMap<String, WasmModule>,
     lua: Option<usize>,
     /// The set values
@@ -49,15 +49,11 @@ impl WasmNvimState {
     pub(crate) fn new()-> Self {
         let wasm_engine = Engine::default();
         let mut linker = Linker::new(&wasm_engine);
-        wasmtime_wasi::add_to_linker(&mut linker, |cx|cx)
+        wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |cx|cx)
             .unwrap();
-        let wasi = wasmtime_wasi::WasiCtxBuilder::new()
-            .inherit_env().unwrap()
-            .inherit_stdout()
-            .inherit_stdin()
-            .inherit_stderr()
-            .inherit_stdio().build();
-
+        let wasi = WasiCtxBuilder::new()
+            .inherit_env()
+            .inherit_stdio().build_p1();
 
         let store = Store::new(&wasm_engine, wasi );
 

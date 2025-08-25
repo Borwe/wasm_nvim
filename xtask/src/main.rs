@@ -41,7 +41,7 @@ fn build(){
     }
 
     let mut cmd = Command::new("cargo");
-    cmd.args(["build","--package","wasm_nvim", "-r"])
+    cmd.args(["build","--package","wasm_nvim", /*"-r"*/])
         .stdout(io::stdout()).stderr(io::stderr());
     cmd.output().expect("Failed to build wasm_nvim");
 }
@@ -50,7 +50,9 @@ fn build_zig_tests(){
     let current_dir = env::current_dir().unwrap();
 
     env::set_current_dir("./wasm").expect("Couldn't change dir to './wasm'");
-    gen_cmd(&["zig","build-lib","tests.zig","-target","wasm32-wasi", "-dynamic", "-rdynamic"]).expect("Failed to build zig wasm module for testing");
+    gen_cmd(&["zig","build-exe","tests.zig","-target"
+        ,"wasm32-wasi", "-fno-sanitize-c",
+        "-fno-entry", "-dynamic", "-rdynamic" ]).expect("Failed to build zig wasm module for testing");
 
     env::set_current_dir(current_dir).unwrap();
 }
@@ -69,7 +71,7 @@ fn r#move(){
         use std::fs;
 
         fs::create_dir_all("lua").unwrap();
-        gen_cmd(&["cp","./target/release/libwasm_nvim.so",
+        gen_cmd(&["cp","./target/debug/libwasm_nvim.so",
             "./lua/wasm_nvim.so"])
             .expect("Failed to move ./target/release/libwasm_nvim.so to ./lua/wasm_nvim.so");
     }

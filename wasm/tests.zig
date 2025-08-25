@@ -13,7 +13,7 @@ extern "host" fn nvim_list_bufs() u32;
 extern "host" fn lua_exec(id: u32) void;
 extern "host" fn lua_eval(id: u32) u32;
 
-var aloc: std.mem.Allocator = std.heap.page_allocator;
+var aloc: std.mem.Allocator = std.heap.wasm_allocator;
 
 const Variant = union(enum) { I64: i64, String: *[]u8 };
 
@@ -80,7 +80,6 @@ export fn nvimEcho(id: u32) void {
 
 export fn consuming(id: u32) void {
     const writer = std.io.getStdOut().writer();
-    writer.print("\n--CONSUMING--\n", .{}) catch unreachable;
     const size_in = get_value_size(id);
     const addr_items = get_value_addr(id);
     writer.print("Starting AREA {s}\n", .{addr_items[0..size_in]}) catch unreachable;
@@ -100,14 +99,17 @@ export fn returning() u32 {
 export fn luaExecExample() void {
     const writer = std.io.getStdOut().writer();
     writer.print("\n--Lua Exec Example--\n", .{}) catch unreachable;
+    var vals = ArrayList(u8).init(aloc);
+
     const script =
         \\local a = 2;
         \\local b = 2;
         \\local c = 2+2;
         \\print("Value of c from lua WASM script is : "..c);
     ;
+    vals.appendSlice(script) catch unreachable;
     const id = get_id();
-    set_value(id, get_addr(&script[0]), script.len);
+    set_value(id, get_addr(&vals.items[0]), script.len);
     lua_exec(id);
 }
 
@@ -116,12 +118,18 @@ export fn luaEvalExample() void {
     writer.print("\n--Lua Eval Example--\n", .{}) catch unreachable;
     const script_returns_nil = "require('testing_lua').print_hello_return_nothing()";
     const script_returns_num = "require('testing_lua').print_hello_return_number()";
+
+    var vals = ArrayList(u8).init(aloc);
+    vals.appendSlice(script_returns_nil) catch unreachable;
+
     var id = get_id();
-    set_value(id, get_addr(&script_returns_nil[0]), script_returns_nil.len);
+    set_value(id, get_addr(&vals.items[0]), script_returns_nil.len);
     const return_first = lua_eval(id);
 
+    var vals2 = ArrayList(u8).init(aloc);
+    vals2.appendSlice(script_returns_num) catch unreachable;
     id = get_id();
-    set_value(id, get_addr(&script_returns_num[0]), script_returns_num.len);
+    set_value(id, get_addr(&vals2.items[0]), script_returns_num.len);
     const return_second = lua_eval(id);
 
     var size_in = get_value_size(return_first);

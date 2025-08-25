@@ -182,6 +182,7 @@ pub(crate) fn add_functionality_to_module<'a>(lua: &'a Lua,
     let wasm_nvim = utils::lua_this(lua)?;
     match wasm_nvim.get::<LuaTable>(wasm_name.as_str()){
         Ok(table) => {
+            println!("YOOLO");
             let luafunc = lua.create_function(func)?;
             table.set(functionality.name.as_str(), luafunc)
         },

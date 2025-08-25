@@ -4,20 +4,22 @@ vim.opt.runtimepath:append(vim.fn.getcwd())
 vim.opt.runtimepath:append(vim.fn.getcwd().."/testing_lua_module")
 local wasm = require("wasm_nvim")
 
-print("Starting setup")
+print("Starting setup\n")
 
 wasm.setup {
-  --debug = true
+  debug = true
 }
 
-print("LOADED SETUP SUCCESFULLY")
+print("Setup loaded succesfully\n")
 
-wasm.tests.luaExecExample();
-wasm.tests.luaEvalExample();
 
 wasm.tests.consuming {
   "HEHEHE"
 }
+
+wasm.tests.luaExecExample();
+wasm.tests.luaEvalExample();
+
 
 local val = wasm.tests.returning();
 print("YOLOL!! from wasm: "..val.yoo.."\n")

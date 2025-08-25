@@ -1,6 +1,6 @@
 use mlua::prelude::*;
 use wasmtime::*;
-use std::{str::FromStr, path::PathBuf};
+use std::{path::PathBuf, str::FromStr};
 
 mod nvim_interface;
 mod utils;
@@ -149,23 +149,15 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
             let state = unsafe {
                 &mut (*(WASM_STATE.lock().unwrap().get_mut() as *mut WasmNvimState))
             };
-            let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
-            let mut ptr = unsafe {
-                mem.data_ptr(&state.store).offset(loc as isize) as *const u8
-            };
-            let mut val_to_add = String::new();
-            for _ in 0..size{
-                let c = unsafe{
-                    let c = *ptr as char;
-                    ptr = ptr.offset(1);
-                    c
-                };
-                val_to_add.push(c);
-            }
+            let mem = caller.get_export("memory").expect("No memory found")
+                    .into_memory().unwrap();
+            
+            let val = &mem.data(&state.store)[loc as usize..loc as usize+size as usize];
+            let val_to_add = String::from_utf8(val.to_vec()).unwrap();
 
             utils::debug(unsafe{
                 &*state.get_lua().unwrap()
-            }, &format!("ID: {id} VAL: {val_to_add} PTR: {loc}")).unwrap();
+            }, &format!("ID: {id} VAL: {val_to_add} PTR: {loc}\n")).unwrap();
 
             let vals: Vec<Val> = vec![Val::from(loc), Val::from(size as i32)];
             
@@ -182,7 +174,9 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
                 & *WASM_STATE.lock().unwrap().borrow().get_lua().unwrap()
             };
             let val = WASM_STATE.lock().unwrap().borrow_mut().get_value(id).unwrap();
+            println!("BEGINNING CALL");
             lua.load(&val).exec().unwrap();
+            println!("LUA EVAL DONE CALL");
         }).unwrap();
 
         WASM_STATE.lock().unwrap().borrow_mut().linker.func_wrap("host", "lua_eval",
@@ -224,8 +218,10 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
             alloc.call(caller.as_context_mut(), &vals, &mut returns).unwrap();
 
             unsafe {
-                let mut ptr = caller.get_export("memory").unwrap()
-                    .into_memory().unwrap().data_ptr(caller.as_context())
+                let mut ptr = caller.get_export("memory")
+                        .expect("Module not exporting memory").into_memory()
+                        .unwrap()
+                        .data_ptr(caller.as_context())
                     .offset(returns[0].unwrap_i32() as u32 as isize);
 
                 for c in WASM_STATE.lock().unwrap()
@@ -248,7 +244,7 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
         };
 
 
-        //get and add module
+        //get and add modules
         {
             let state = unsafe {
                 &mut (*(WASM_STATE.lock().unwrap().get_mut() as *mut WasmNvimState))
@@ -256,7 +252,8 @@ fn setup_wasms_with_lua(lua: &Lua) -> LuaResult<()> {
 
 
             let module = Module::from_file(&state.wasm_engine,wasm).unwrap();
-            let instance = state.linker.instantiate(&mut state.store , &module).unwrap();
+            let pre = state.linker.instantiate_pre(&module).unwrap();
+            let instance = pre.instantiate(&mut state.store).unwrap();
 
             //add module to list
             state.wasm_modules.insert(wasm.clone(),
