@@ -200,7 +200,7 @@ async fn main() {
 
     match BUILD_INFO.get().unwrap().contains_key(args.get(1).unwrap()) {
         true => match args.get(1){
-            Some(x) if *x == "build" => build(),
+            Some(x) if *x == "build" => build().await,
             Some(x) if *x == "test" => test(),
             Some(x) if *x == "build_zig_test" => build_zig_tests(),
             _ => show_information()
