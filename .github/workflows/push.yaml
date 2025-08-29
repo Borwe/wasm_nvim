@@ -71,7 +71,7 @@ jobs:
         if: matrix.config.os == 'windows-latest'
         shell: pwsh
         run: |
-          tree ./
+          tree ./nvim-win64/
           $env:PATH = Join-Path (Get-Location).Path "nvim-win64\nvim-win64\bin" + ";" + $env:PATH
           cargo xtask test #run tests on library
           rm ./lua/wasm_nvim.dll
