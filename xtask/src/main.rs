@@ -1,5 +1,5 @@
 #[cfg(windows)]
-use std::{env,str::FromStr,fs,path::PathBuf, error::Error};
+use std::{str::FromStr,fs,path::PathBuf, error::Error};
 #[cfg(windows)]
 use zip;
 
