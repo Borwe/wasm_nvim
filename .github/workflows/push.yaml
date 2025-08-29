@@ -13,10 +13,10 @@ jobs:
               name: "Linux Build & Test",
               os: ubuntu-latest
             }
-          #- {
-          #    name: "Microsoft Windows Build & Test",
-          #    os: windows-latest
-          #  }
+          - {
+              name: "Microsoft Windows Build & Test",
+              os: windows-latest
+            }
           - {
               name: "MacOs Build & Test",
               os: macos-latest
@@ -48,8 +48,6 @@ jobs:
         run: |
           Invoke-WebRequest "https://github.com/neovim/neovim/releases/download/v0.11.3/nvim-win64.zip" -OutFile .\nvim-win64.zip
           Expand-Archive nvim-win64.zip 
-          Invoke-WebRequest "https://ziglang.org/download/0.11.0/zig-windows-x86_64-0.11.0.zip" -OutFile .\zig-windows-x86_64-0.11.0.zip
-          Expand-Archive zig-windows-x86_64-0.11.0.zip
 
       - name: Test For Linux
         if: matrix.config.os == 'ubuntu-latest'
@@ -68,10 +66,6 @@ jobs:
           rm ./lua/wasm_nvim.so
           nvim -l ./default_cfg/testing_macos.lua #test download script
           rm ./lua/wasm_nvim.so
-          # cargo make zig_test
-          # nvim -l ./default_cfg/testing_macos.lua
-          # rm ./lua/wasm_nvim.so
-          # cargo make test
 
       - name: Test For Windows
         if: matrix.config.os == 'windows-latest'
@@ -79,10 +73,14 @@ jobs:
         run: |
           $env:CD = Get-Location
           $env:PATH=$env:CD+'/nvim-win64/bin/;'+$env:PATH
-          $env:PATH=$env:CD+'/zig-windows-x86_64-0.11.0/zig-windows-x86_64-0.11.0/;'+$env:PATH
-          cargo make ci_zig_test
-          ./nvim-win64/nvim-win64/bin/nvim -l ./default_cfg/testing_macos.lua
-          cargo make ci_test
+          cargo xtask test #run tests on library
+          rm ./lua/wasm_nvim.so
+          #nvim -l ./default_cfg/testing_win.lua #test download script
+          #rm ./lua/wasm_nvim.so
+          #
+          # cargo make ci_zig_test
+          # ./nvim-win64/nvim-win64/bin/nvim -l ./default_cfg/testing_macos.lua
+          # cargo make ci_test
 
       - name: Zip file Unix
         if: matrix.config.os != 'windows-latest' && contains(github.ref, 'tags/v')
