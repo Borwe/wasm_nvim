@@ -29,9 +29,6 @@ jobs:
         with:
           version: 0.14.1
 
-      - uses: MunifTanjim/setup-neovim-action@v1
-
-
       - name: Download files Linux
         if: matrix.config.os == 'ubuntu-latest'
         run: |
@@ -74,7 +71,9 @@ jobs:
         if: matrix.config.os == 'windows-latest'
         shell: pwsh
         run: |
-          nvim --version
+          tree ./nvim-win64/nvim-win64
+          $env:CD = Get-Location
+          $env:PATH=$env:CD+'/nvim-win64/nvim-win64/bin/;'+$env:PATH
           cargo xtask test #run tests on library
           rm ./lua/wasm_nvim.dll
 
