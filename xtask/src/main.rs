@@ -156,8 +156,8 @@ fn build_zig_tests(){
     env::set_current_dir(current_dir).unwrap();
 }
 
-fn test(){
-    build();
+async fn test(){
+    build().await;
     build_zig_tests();
     r#move();
     gen_cmd(&["nvim","-u","NONE","-l","./default_cfg/testing.lua"])
@@ -201,7 +201,7 @@ async fn main() {
     match BUILD_INFO.get().unwrap().contains_key(args.get(1).unwrap()) {
         true => match args.get(1){
             Some(x) if *x == "build" => build().await,
-            Some(x) if *x == "test" => test(),
+            Some(x) if *x == "test" => test().await,
             Some(x) if *x == "build_zig_test" => build_zig_tests(),
             _ => show_information()
         }
