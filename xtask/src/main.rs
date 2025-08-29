@@ -35,8 +35,8 @@ fn build(){
     {
         let path = std::env::current_dir().unwrap();
         let crdir = path.to_string_lossy();
-        env::set_var("LUA_INC", format!("{crdir}\\release\\build\\LuaJIT-51d4c26ec7805d77bfc3470fdf99b73c4ef2faec\\src"));
-        env::set_var("LUA_LIB", format!("{crdir}\\release\\build\\LuaJIT-51d4c26ec7805d77bfc3470fdf99b73c4ef2faec\\src"));
+        env::set_var("LUA_INC", format!("{crdir}\\debug\\build\\LuaJIT-51d4c26ec7805d77bfc3470fdf99b73c4ef2faec\\src"));
+        env::set_var("LUA_LIB", format!("{crdir}\\debug\\build\\LuaJIT-51d4c26ec7805d77bfc3470fdf99b73c4ef2faec\\src"));
         env::set_var("LUA_LIB_NAME", "lua51");
     }
 
@@ -73,13 +73,13 @@ fn r#move(){
     {
         gen_cmd(&["cp","./target/debug/libwasm_nvim.so",
             "./lua/wasm_nvim.so"])
-            .expect("Failed to move ./target/release/libwasm_nvim.so to ./lua/wasm_nvim.so");
+            .expect("Failed to move ./target/debug/libwasm_nvim.so to ./lua/wasm_nvim.so");
     }
     #[cfg(target_os = "macos")]
     {
         gen_cmd(&["cp","./target/debug/libwasm_nvim.dylib",
             "./lua/wasm_nvim.so"])
-            .expect("Failed to move ./target/release/libwasm_nvim.so to ./lua/wasm_nvim.so");
+            .expect("Failed to move ./target/debug/libwasm_nvim.so to ./lua/wasm_nvim.so");
     }
 
     #[cfg(target_os = "windows")]
