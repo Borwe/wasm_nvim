@@ -102,7 +102,7 @@ async fn get_luajit_source()-> Result<()>{
 
 #[tokio::main]
 async fn main()-> Result<()> {
-    println!("cargo:rerun-if-changed=build.rs");
-    get_luajit_source().await?;
+    //println!("cargo:rerun-if-changed=build.rs");
+    //get_luajit_source().await?;
     Ok(())
 }
