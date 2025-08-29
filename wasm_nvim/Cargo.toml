@@ -7,13 +7,6 @@ authors = ["Brian Orwe <brian.orwe@gmail.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 
-[build-dependencies]
-reqwest = { version = "0.11", features = ["json"] }
-tokio = { version = "1", features = ["full"] }
-anyhow = "1.0"
-zip = "0.6"
-cc = "1.0"
-
 [dependencies]
 mlua = {version = "0.11.2", features = ["luajit", "module"]}
 anyhow = "1.0"
