@@ -86,7 +86,7 @@ fn r#move(){
     {
         gen_cmd(&["copy",".\\target\\debug\\wasm_nvim.dll",
             ".\\lua\\wasm_nvim.dll"])
-            .expect("Failed to move ./target/release/libwasm_nvim.so to ./lua/wasm_nvim.so");
+            .expect("Failed to move .\\target\\debug\\wasm_nvim.dll to .\\lua\\wasm_nvim.dll");
     }
 }
 

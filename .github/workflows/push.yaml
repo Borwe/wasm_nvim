@@ -74,7 +74,7 @@ jobs:
           $env:CD = Get-Location
           $env:PATH=$env:CD+'/nvim-win64/bin/;'+$env:PATH
           cargo xtask test #run tests on library
-          rm ./lua/wasm_nvim.so
+          rm ./lua/wasm_nvim.dll
           #nvim -l ./default_cfg/testing_win.lua #test download script
           #rm ./lua/wasm_nvim.so
           #

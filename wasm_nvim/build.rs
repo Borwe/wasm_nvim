@@ -88,7 +88,7 @@ async fn get_luajit_source()-> Result<()>{
              src_dir);
     println!("cargo:rustc-env=LUA_LIB={:?}",
              src_dir);
-    println!("cargo:rustc-env=LUA_LIB_NAME=lua51");
+    println!("cargo:rustc-env=LUA_LIB_NAME=lua");
 
     Ok(())
 }
