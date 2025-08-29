@@ -71,15 +71,10 @@ jobs:
         if: matrix.config.os == 'windows-latest'
         shell: pwsh
         run: |
+          tree ./
           $env:PATH = Join-Path (Get-Location).Path "nvim-win64\bin" + ";" + $env:PATH
           cargo xtask test #run tests on library
           rm ./lua/wasm_nvim.dll
-          #nvim -l ./default_cfg/testing_win.lua #test download script
-          #rm ./lua/wasm_nvim.so
-          #
-          # cargo make ci_zig_test
-          # ./nvim-win64/nvim-win64/bin/nvim -l ./default_cfg/testing_macos.lua
-          # cargo make ci_test
 
       - name: Zip file Unix
         if: matrix.config.os != 'windows-latest' && contains(github.ref, 'tags/v')
@@ -90,13 +85,14 @@ jobs:
           cp ./wasm_nvim_${{matrix.config.os}}.zip ../
 
       - name: Zip file Windows
-        if: matrix.config.os == 'windows-latest' 
+        if: matrix.config.os == 'windows-latest' && contains(github.ref, 'tags/v')
         run: |
           cd ./lua
           tar -cf ./wasm_nvim_${{matrix.config.os}}.zip ./wasm_nvim.dll
           copy wasm_nvim_${{matrix.config.os}}.zip ..\
 
       - uses: "actions/upload-artifact@v4"
+        if: contains(github.ref, 'tags/v')
         id: upload_artifact
         with:
           path: ./wasm_nvim_${{matrix.config.os}}.zip
