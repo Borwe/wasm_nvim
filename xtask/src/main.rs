@@ -35,8 +35,8 @@ fn build(){
     {
         let path = std::env::current_dir().unwrap();
         let crdir = path.to_string_lossy();
-        env::set_var("LUA_INC", format!("{crdir}\\release\\build\\LuaJIT-2.1.0-beta3\\src"));
-        env::set_var("LUA_LIB", format!("{crdir}\\release\\build\\LuaJIT-2.1.0-beta3\\src"));
+        env::set_var("LUA_INC", format!("{crdir}\\release\\build\\LuaJIT-51d4c26ec7805d77bfc3470fdf99b73c4ef2faec\\src"));
+        env::set_var("LUA_LIB", format!("{crdir}\\release\\build\\LuaJIT-51d4c26ec7805d77bfc3470fdf99b73c4ef2faec\\src"));
         env::set_var("LUA_LIB_NAME", "lua51");
     }
 
