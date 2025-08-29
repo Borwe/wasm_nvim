@@ -26,8 +26,10 @@ async fn get_luajit_source()-> Result<(), Box<dyn Error>>{
         Ok(res) => panic!("Got response code {}",res.status()),
         Err(e) => panic!("Error downloading: {}", e),
     };
-    let target_dir = PathBuf::from_str(OUT_DIR).unwrap().join("luaj.zip");
-    std::fs::create_dir_all(target_dir).expect("Couldn't create dir");
+    let target_dir = PathBuf::from_str(OUT_DIR)
+        .unwrap().join("luaj.zip");
+    std::fs::create_dir_all(PathBuf::from_str(OUT_DIR).unwrap())
+        .expect("Couldn't create dir");
 
 
     //write bytes to target/dls
