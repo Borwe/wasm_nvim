@@ -66,12 +66,18 @@ fn test(){
 }
 
 fn r#move(){
+    use std::fs;
+
+    fs::create_dir_all("lua").unwrap();
     #[cfg(target_os = "linux")]
     {
-        use std::fs;
-
-        fs::create_dir_all("lua").unwrap();
         gen_cmd(&["cp","./target/debug/libwasm_nvim.so",
+            "./lua/wasm_nvim.so"])
+            .expect("Failed to move ./target/release/libwasm_nvim.so to ./lua/wasm_nvim.so");
+    }
+    #[cfg(target_os = "macos")]
+    {
+        gen_cmd(&["cp","./target/debug/libwasm_nvim.dylib",
             "./lua/wasm_nvim.so"])
             .expect("Failed to move ./target/release/libwasm_nvim.so to ./lua/wasm_nvim.so");
     }

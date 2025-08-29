@@ -63,10 +63,10 @@ jobs:
       - name: Test For MacOs
         if: matrix.config.os == 'macos-latest'
         run: |
-          export PATH=$PWD/nvim-macos/bin/:$PATH
+          export PATH=$PWD/nvim-macos-x86_64/bin/:$PATH
           cargo xtask test #run tests on library
           rm ./lua/wasm_nvim.so
-          nvim -l ./default_cfg/testing_linux.lua #test download script
+          nvim -l ./default_cfg/testing_macos.lua #test download script
           rm ./lua/wasm_nvim.so
           # cargo make zig_test
           # nvim -l ./default_cfg/testing_macos.lua
