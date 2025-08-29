@@ -1,5 +1,8 @@
 #[cfg(windows)]
-use std::error::Error;
+use std::{env,str::FromStr,fs,path::PathBuf, error::Error};
+#[cfg(windows)]
+use zip;
+
 use std::{collections::HashMap, env, io, process::Command, sync::OnceLock};
 
 static BUILD_INFO: OnceLock<HashMap<String, &str>> = OnceLock::new();
